@@ -47,7 +47,7 @@ class KioskManager {
 
     startServer() {
         console.log('Starting server...');
-        this.serverProcess = spawn('node', ['src/server.js'], {
+        this.serverProcess = spawn(process.execPath, ['src/server.js'], {
             stdio: 'inherit',
             cwd: process.cwd()
         });
