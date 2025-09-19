@@ -140,3 +140,6 @@ photos/
 
 # Config
 src/config.json
+
+# Garbage
+.DS_Store
