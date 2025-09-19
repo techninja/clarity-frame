@@ -1,0 +1,18 @@
+[Unit]
+Description=Clarity Frame Kiosk
+After=graphical-session.target
+
+[Service]
+Type=simple
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/clarity-frame
+ExecStart=/usr/bin/node scripts/kiosk-manager.js start
+ExecStop=/usr/bin/node scripts/kiosk-manager.js stop
+Restart=always
+RestartSec=10
+Environment=DISPLAY=:0
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=graphical-session.target

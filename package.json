@@ -6,6 +6,10 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
+    "kiosk": "node scripts/kiosk-manager.js start",
+    "kiosk:stop": "node scripts/kiosk-manager.js stop",
+    "kiosk:status": "node scripts/kiosk-manager.js status",
+    "kiosk:install": "node scripts/install-kiosk.js",
     "pi-configure": "node src/pi-install.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
