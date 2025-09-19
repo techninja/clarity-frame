@@ -38,15 +38,24 @@ Environment=NODE_ENV=production
 [Install]
 WantedBy=multi-user.target`;
 
-const LXDE_AUTOSTART_DIR = path.join(os.homedir(), '.config', 'lxsession', 'LXDE-pi');
-const AUTOSTART_FILE = path.join(LXDE_AUTOSTART_DIR, 'autostart');
-const AUTOSTART_ADDITIONS = `# Disable screensaver and power management for the display
+// Detect desktop environment and autostart paths
+const getAutostartConfig = () => {
+    const homeDir = os.homedir();
+    const configs = [
+        { dir: path.join(homeDir, '.config', 'lxsession', 'LXDE-pi'), name: 'LXDE-pi' },
+        { dir: path.join(homeDir, '.config', 'lxsession', 'LXDE'), name: 'LXDE' },
+        { dir: path.join(homeDir, '.config', 'autostart'), name: 'XDG' }
+    ];
+    return configs;
+};
+
+const getAutostartAdditions = (port) => `# Disable screensaver and power management for the display
 @xset s noblank
 @xset s off
 @xset -dpms
 
 # Launch Chromium in kiosk mode pointing to the local photo frame server
-@chromium-browser --noerrdialogs --disable-infobars --kiosk http://localhost:3000`;
+@chromium-browser --noerrdialogs --disable-infobars --kiosk http://localhost:${port}`;
 
 // --- Helper Functions ---
 const log = {
@@ -116,14 +125,41 @@ async function setup() {
 
     // 2. Configure autostart for Chromium kiosk
     log.info('[2/2] Configuring desktop autostart...');
-    await fs.mkdir(LXDE_AUTOSTART_DIR, { recursive: true });
-
-    // Clean up old entries before adding new ones
-    await removeBlockFromFile(AUTOSTART_FILE, '# Disable screensaver');
-
-    // Add the new kiosk mode entries
-    await fs.appendFile(AUTOSTART_FILE, `\n${AUTOSTART_ADDITIONS}\n`);
-    log.success('      ...Desktop autostart configured for kiosk mode.');
+    
+    // Get port from config
+    let port = 3000;
+    try {
+        const configPath = path.join(APP_DIR, 'src', 'config.json');
+        const configContent = await fs.readFile(configPath, 'utf-8');
+        const config = JSON.parse(configContent);
+        port = config.port || 3000;
+    } catch (e) {
+        log.warn('Could not read port from config, using default 3000');
+    }
+    
+    const autostartConfigs = getAutostartConfig();
+    let configured = false;
+    
+    for (const config of autostartConfigs) {
+        try {
+            await fs.mkdir(config.dir, { recursive: true });
+            const autostartFile = path.join(config.dir, 'autostart');
+            
+            // Clean up old entries
+            await removeBlockFromFile(autostartFile, '# Disable screensaver');
+            
+            // Add new entries
+            await fs.appendFile(autostartFile, `\n${getAutostartAdditions(port)}\n`);
+            log.success(`      ...Configured ${config.name} autostart`);
+            configured = true;
+        } catch (e) {
+            log.warn(`      ...Could not configure ${config.name}: ${e.message}`);
+        }
+    }
+    
+    if (!configured) {
+        throw new Error('Could not configure any desktop autostart');
+    }
 
     log.step('\n--- Setup Complete! ---');
     log.info('The Node.js server is now running as a background service.');
@@ -149,8 +185,17 @@ async function undo() {
 
     // 2. Revert autostart configuration
     log.info('[2/2] Reverting desktop autostart configuration...');
-    await removeBlockFromFile(AUTOSTART_FILE, '# Disable screensaver');
-    log.success('      ...Kiosk mode entries removed from autostart file.');
+    
+    const autostartConfigs = getAutostartConfig();
+    for (const config of autostartConfigs) {
+        try {
+            const autostartFile = path.join(config.dir, 'autostart');
+            await removeBlockFromFile(autostartFile, '# Disable screensaver');
+            log.success(`      ...Reverted ${config.name} autostart`);
+        } catch (e) {
+            // Ignore errors during cleanup
+        }
+    }
 
     log.step('\n--- Undo Complete! ---');
     log.warn('To fully revert the changes, a reboot is recommended.');
