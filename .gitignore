@@ -137,3 +137,6 @@ dist
 
 # Photos
 photos/
+
+# Config
+src/config.json
