@@ -7,6 +7,7 @@ const __dirname = path.dirname(__filename);
 const CONFIG_PATH = path.join(__dirname, 'config.json');
 
 const defaultConfig = {
+    port: parseInt(process.env.PORT) || 3000,
     photosDir: './photos',
     transitionTime: 1500,
     imageDisplayTime: 10000,

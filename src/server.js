@@ -12,7 +12,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3000;
 
 let imageCache = [];
 let weatherCache = null;
@@ -134,8 +133,8 @@ async function initialize() {
         })
         .on('error', (error) => console.error('Watcher error:', error));
 
-    app.listen(PORT, () => {
-        console.log(`Photo frame server running at http://localhost:${PORT}`);
+    app.listen(config.port, () => {
+        console.log(`Photo frame server running at http://localhost:${config.port}`);
     });
 }
 
