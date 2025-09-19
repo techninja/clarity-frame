@@ -44,15 +44,15 @@ class KioskManager {
     }
 
     startKiosk() {
+        // Check if display is available
+        if (!process.env.DISPLAY) {
+            console.error('No DISPLAY environment variable set. Kiosk mode requires X11.');
+            return;
+        }
+
         console.log('Starting kiosk display...');
         
-        // Try different browsers in order of preference
-        const browsers = [
-            'chromium-browser',
-            'google-chrome',
-            'firefox'
-        ];
-
+        const browsers = ['chromium-browser', 'google-chrome', 'firefox'];
         const url = `http://localhost:${config.port}`;
         const kioskArgs = [
             '--kiosk',
@@ -62,43 +62,44 @@ class KioskManager {
             '--disable-translate',
             '--disable-features=TranslateUI',
             '--autoplay-policy=no-user-gesture-required',
+            '--no-sandbox',
             url
         ];
 
-        let browserFound = false;
         for (const browser of browsers) {
             try {
                 this.kioskProcess = spawn(browser, kioskArgs, {
-                    stdio: 'pipe',
-                    env: { ...process.env, DISPLAY: ':0' }
+                    stdio: ['ignore', 'pipe', 'pipe'],
+                    env: { ...process.env, DISPLAY: process.env.DISPLAY || ':0' }
+                });
+
+                this.kioskProcess.stderr.on('data', (data) => {
+                    console.error(`Kiosk stderr: ${data}`);
                 });
 
                 this.kioskProcess.on('error', (err) => {
                     if (err.code === 'ENOENT') {
                         console.log(`${browser} not found, trying next...`);
-                    } else {
-                        console.error(`Kiosk error: ${err.message}`);
+                        return;
                     }
+                    console.error(`Kiosk error: ${err.message}`);
                 });
 
                 this.kioskProcess.on('exit', (code) => {
-                    if (!this.isShuttingDown) {
-                        console.log(`Kiosk exited with code ${code}, restarting...`);
-                        setTimeout(() => this.startKiosk(), 2000);
+                    if (!this.isShuttingDown && code !== 0) {
+                        console.log(`Kiosk exited with code ${code}, waiting before restart...`);
+                        setTimeout(() => this.startKiosk(), 5000);
                     }
                 });
 
-                browserFound = true;
                 console.log(`Kiosk started with ${browser}`);
-                break;
+                return;
             } catch (err) {
                 continue;
             }
         }
 
-        if (!browserFound) {
-            console.error('No suitable browser found for kiosk mode');
-        }
+        console.error('No suitable browser found for kiosk mode');
     }
 
     shutdown() {
