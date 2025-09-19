@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Raspberry Pi Photo Frame</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div id="pixi-canvas-container"></div>
+
+  <div class="overlay-container">
+    <div id="clock-container">
+      <div id="time"></div>
+      <div id="date"></div>
+    </div>
+    <div id="weather-container">
+      <div id="weather-icon"></div>
+      <div id="weather-temp"></div>
+      <div id="weather-desc"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.2/pixi.min.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const timeEl = document.getElementById('time');
+      const dateEl = document.getElementById('date');
+      const weatherContainer = document.getElementById('weather-container');
+      const weatherIconEl = document.getElementById('weather-icon');
+      const weatherTempEl = document.getElementById('weather-temp');
+      const weatherDescEl = document.getElementById('weather-desc');
+
+      let config = {};
+      let images = [];
+      let currentImageIndex = 0;
+
+      let app; // Declare here so it's accessible everywhere
+
+      async function init() {
+        // Initialize PixiJS app by passing options directly to the constructor.
+        app = new PIXI.Application({
+          background: '#000000',
+          resizeTo: window,
+          autoDensity: true,
+          resolution: window.devicePixelRatio || 1,
+        });
+        document.getElementById('pixi-canvas-container').appendChild(app.view);
+
+        // Fetch config and initial data
+        config = await (await fetch('/api/config')).json();
+        images = await (await fetch('/api/images')).json();
+
+        if (images.length === 0) {
+          showError("No images found. Add photos to the 'photos' directory.");
+          return;
+        }
+
+        // Setup overlays
+        setupClock();
+        if (config.clock.enabled) {
+          updateClock(); // Initial call
+          setInterval(updateClock, 1000);
+        }
+
+        if (config.weather.enabled) {
+          updateWeather();
+          setInterval(updateWeather, 15 * 60 * 1000); // Update every 15 mins
+        }
+
+        // Start the slideshow
+        startSlideshow();
+      }
+
+      function setupClock() {
+        const clockContainer = document.getElementById('clock-container');
+        clockContainer.style.display = config.clock.enabled ? 'block' : 'none';
+        dateEl.style.display = config.clock.showDate ? 'block' : 'none';
+      }
+
+      function updateClock() {
+        const now = new Date();
+        // Use native JS date formatting. This is simpler and removes the date-fns dependency.
+        // The format options from config.json will be ignored in favor of these sensible defaults.
+        timeEl.textContent = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        if (config.clock.showDate) {
+          dateEl.textContent = now.toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+        }
+      }
+
+      async function updateWeather() {
+        try {
+          const weather = await (await fetch('/api/weather')).json();
+          if (weather && !weather.error) {
+            weatherContainer.style.display = 'flex';
+            weatherTempEl.textContent = `${weather.temp}°`;
+            weatherDescEl.textContent = weather.description;
+            // OpenWeatherMap icons can be mapped to a local set or SVGs
+            weatherIconEl.innerHTML = `<img src="https://openweathermap.org/img/wn/${weather.icon}@2x.png" alt="Weather icon">`;
+          } else {
+            weatherContainer.style.display = 'none';
+          }
+        } catch (e) {
+          weatherContainer.style.display = 'none';
+        }
+      }
+
+      function startSlideshow() {
+        let currentSprite = null;
+        let nextSprite = null;
+
+        const displayImage = async () => {
+          if (images.length === 0) return;
+
+          const imageInfo = images[currentImageIndex];
+          const texture = await PIXI.Assets.load(imageInfo.url);
+
+          // Create the next sprite and set it to be invisible
+          nextSprite = new PIXI.Sprite(texture);
+          resizeSprite(nextSprite);
+          nextSprite.alpha = 0;
+          app.stage.addChild(nextSprite);
+
+          // Animate transition using the application's ticker for better lifecycle management.
+          const ticker = app.ticker;
+          let elapsed = 0;
+
+          // This transition function is now parameter-less.
+          // We will get the delta time directly from the ticker object itself.
+          // This is a more robust pattern that avoids confusion with callback signatures between PixiJS versions.
+          const transition = () => {
+            elapsed += ticker.deltaMS; // Use the deltaMS from the ticker instance.
+            const progress = Math.min(elapsed / config.transitionTime, 1);
+
+            nextSprite.alpha = progress;
+            if (currentSprite) {
+              currentSprite.alpha = 1 - progress;
+            }
+
+            if (progress >= 1) {
+              ticker.remove(transition);
+              // Clean up old sprite
+              if (currentSprite) {
+                app.stage.removeChild(currentSprite);
+                currentSprite.destroy();
+              }
+              currentSprite = nextSprite;
+              nextSprite = null;
+
+              // Schedule the next image
+              setTimeout(displayImage, config.imageDisplayTime);
+            }
+          };
+          ticker.add(transition);
+
+          // Move to the next image, looping back to the start
+          currentImageIndex = (currentImageIndex + 1) % images.length;
+        };
+
+        displayImage();
+      }
+
+      // This function scales the image to fill the screen while maintaining aspect ratio
+      function resizeSprite(sprite) {
+        const screenWidth = app.screen.width;
+        const screenHeight = app.screen.height;
+        const textureWidth = sprite.texture.width;
+        const textureHeight = sprite.texture.height;
+
+        const screenRatio = screenWidth / screenHeight;
+        const imageRatio = textureWidth / textureHeight;
+
+        if (screenRatio > imageRatio) {
+          sprite.width = screenWidth;
+          sprite.height = screenWidth / imageRatio;
+        } else {
+          sprite.height = screenHeight;
+          sprite.width = screenHeight * imageRatio;
+        }
+
+        sprite.anchor.set(0.5);
+        sprite.x = screenWidth / 2;
+        sprite.y = screenHeight / 2;
+      }
+
+      function showError(message) {
+        const errorEl = document.createElement('div');
+        errorEl.className = 'error-message';
+        errorEl.textContent = message;
+        document.body.appendChild(errorEl);
+      }
+
+      window.addEventListener('resize', () => {
+        // app might not be initialized on first load resize event
+        if (app && app.renderer) {
+          app.renderer.resize(window.innerWidth, window.innerHeight);
+          // You might need to re-calculate sprite positions/sizes here
+        }
+      });
+
+      init();
+    });
+  </script>
+</body>
+
+</html>
