@@ -61,6 +61,8 @@ async function processAndCacheImages() {
 
 // Serve the static frontend files
 app.use(express.static(path.join(__dirname, 'public')));
+// Serve node_modules for offline dependencies
+app.use('/lib', express.static(path.join(__dirname, '..' , 'node_modules')));
 // Serve the photos from the configured directory
 // Note: config must be loaded before this route is defined, which it is in initialize()
 app.use('/photos', (req, res, next) => {
