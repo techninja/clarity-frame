@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn } from 'child_process';
-import { config, loadConfig } from './src/config.js';
+import { config, loadConfig } from '../src/config.js';
 
 class KioskManager {
     constructor() {
