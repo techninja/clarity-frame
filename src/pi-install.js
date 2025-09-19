@@ -165,10 +165,18 @@ async function undo() {
 
 // --- Script Entry Point ---
 async function main() {
-    if (process.platform !== 'linux' || os.userInfo().uid !== 0) {
-        log.error('This script must be run as root (using sudo) on a Linux system (like a Raspberry Pi).');
-        log.warn('Please run it like this: sudo npm run pi-configure');
+    if (process.platform !== 'linux') {
+        log.error('This script must be run on a Linux system (like a Raspberry Pi).');
         process.exit(1);
+    }
+
+    log.warn('This script will prompt for sudo password when needed.');
+    log.warn('Make sure you have sudo privileges before continuing.');
+    
+    const shouldContinue = await confirm({ message: 'Continue with setup?' });
+    if (!shouldContinue) {
+        log.info('Setup cancelled.');
+        process.exit(0);
     }
 
     const answer = await select({
