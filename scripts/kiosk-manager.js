@@ -1,12 +1,26 @@
 #!/usr/bin/env node
 
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import { config, loadConfig } from '../src/config.js';
+
+// Check if running as root for X server
+if (process.getuid && process.getuid() !== 0) {
+    console.log('Kiosk manager needs root privileges to start X server.');
+    console.log('Restarting with sudo...');
+    try {
+        execSync(`sudo ${process.argv.join(' ')}`, { stdio: 'inherit' });
+        process.exit(0);
+    } catch (err) {
+        console.error('Failed to restart with sudo');
+        process.exit(1);
+    }
+}
 
 class KioskManager {
     constructor() {
         this.serverProcess = null;
         this.kioskProcess = null;
+        this.xProcess = null;
         this.isShuttingDown = false;
     }
 
@@ -15,13 +29,16 @@ class KioskManager {
         
         console.log('Starting Clarity Frame Kiosk Manager...');
         
+        // Start X server first
+        this.startX();
+        
         // Start server
         this.startServer();
         
-        // Wait a moment for server to start, then start kiosk
+        // Wait for X and server to start, then start kiosk
         setTimeout(() => {
             this.startKiosk();
-        }, 2000);
+        }, 3000);
 
         // Handle shutdown gracefully
         process.on('SIGINT', () => this.shutdown());
@@ -43,13 +60,29 @@ class KioskManager {
         });
     }
 
-    startKiosk() {
-        // Check if display is available
-        if (!process.env.DISPLAY) {
-            console.error('No DISPLAY environment variable set. Kiosk mode requires X11.');
-            return;
-        }
+    startX() {
+        console.log('Starting X server...');
+        
+        this.xProcess = spawn('X', [':0', '-nolisten', 'tcp'], {
+            stdio: 'pipe',
+            detached: false
+        });
 
+        this.xProcess.on('error', (err) => {
+            console.error(`X server error: ${err.message}`);
+        });
+
+        this.xProcess.on('exit', (code) => {
+            if (!this.isShuttingDown) {
+                console.log(`X server exited with code ${code}, restarting...`);
+                setTimeout(() => this.startX(), 2000);
+            }
+        });
+
+        console.log('X server started on :0');
+    }
+
+    startKiosk() {
         console.log('Starting kiosk display...');
         
         const browsers = ['chromium-browser', 'google-chrome', 'firefox'];
@@ -70,11 +103,7 @@ class KioskManager {
             try {
                 this.kioskProcess = spawn(browser, kioskArgs, {
                     stdio: ['ignore', 'pipe', 'pipe'],
-                    env: { ...process.env, DISPLAY: process.env.DISPLAY || ':0' }
-                });
-
-                this.kioskProcess.stderr.on('data', (data) => {
-                    console.error(`Kiosk stderr: ${data}`);
+                    env: { ...process.env, DISPLAY: ':0' }
                 });
 
                 this.kioskProcess.on('error', (err) => {
@@ -114,6 +143,10 @@ class KioskManager {
 
         if (this.serverProcess) {
             this.serverProcess.kill('SIGTERM');
+        }
+
+        if (this.xProcess) {
+            this.xProcess.kill('SIGTERM');
         }
 
         setTimeout(() => {
