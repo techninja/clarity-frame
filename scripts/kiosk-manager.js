@@ -63,7 +63,7 @@ class KioskManager {
     startX() {
         console.log('Starting X server...');
         
-        this.xProcess = spawn('X', [':0', '-nolisten', 'tcp'], {
+        this.xProcess = spawn('X', [':0', '-nolisten', 'tcp', '-s', '0'], {
             stdio: 'pipe',
             detached: false
         });
@@ -96,6 +96,10 @@ class KioskManager {
             '--disable-features=TranslateUI',
             '--autoplay-policy=no-user-gesture-required',
             '--no-sandbox',
+            '--start-fullscreen',
+            '--force-device-scale-factor=1',
+            '--disable-dev-shm-usage',
+            '--disable-gpu-sandbox',
             url
         ];
 
