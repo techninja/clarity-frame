@@ -239,46 +239,43 @@
               if (currentSprite) {
                 imageContainer.removeChild(currentSprite);
                 currentSprite.destroy();
-                // Skip texture cleanup for now to avoid potential issues
               }
               currentSprite = nextSprite;
               nextSprite = null;
 
-              updateDebugStatus(`Image ${currentImageIndex + 1} displayed, starting timer`);
+              updateDebugStatus(`Image ${currentImageIndex + 1} displayed, preloading next`);
 
-              // Preload next image
+              // Preload next image, then start timer
               const nextImageIndex = (currentImageIndex + 1) % images.length;
               if (images[nextImageIndex]) {
-                PIXI.Assets.load(images[nextImageIndex].url);
+                PIXI.Assets.load(images[nextImageIndex].url).then(() => {
+                  updateDebugStatus(`Next image preloaded, starting timer`);
+                  
+                  // Start progress pie animation only after next image is loaded
+                  let imageElapsed = 0;
+                  const updateProgress = () => {
+                    imageElapsed += ticker.deltaMS;
+                    const progress = Math.min(imageElapsed / config.imageDisplayTime, 1);
+                    updateProgressPie(progress);
+                    
+                    if (progress >= 1) {
+                      updateDebugStatus(`Timer complete, loading next image`);
+                      ticker.remove(updateProgress);
+                      displayImage();
+                    }
+                  };
+                  
+                  progressTicker = updateProgress;
+                  ticker.add(updateProgress);
+                }).catch(error => {
+                  updateDebugStatus(`Preload failed: ${error.message}`);
+                  // Start timer anyway if preload fails
+                  setTimeout(displayImage, config.imageDisplayTime);
+                });
+              } else {
+                // No next image, start timer anyway
+                setTimeout(displayImage, config.imageDisplayTime);
               }
-
-              // Start progress pie animation
-              let imageElapsed = 0;
-              const updateProgress = () => {
-                imageElapsed += ticker.deltaMS;
-                const progress = Math.min(imageElapsed / config.imageDisplayTime, 1);
-                updateProgressPie(progress);
-                
-                if (progress >= 1) {
-                  updateDebugStatus(`Timer complete, loading next image`);
-                  ticker.remove(updateProgress);
-                  displayImage();
-                } else {
-                  // Continue the progress animation
-                }
-              };
-              
-              progressTicker = updateProgress;
-              ticker.add(updateProgress);
-              
-              // Fallback timeout to ensure slideshow continues
-              setTimeout(() => {
-                if (progressTicker === updateProgress) {
-                  updateDebugStatus(`Timeout fallback triggered`);
-                  ticker.remove(updateProgress);
-                  displayImage();
-                }
-              }, config.imageDisplayTime + 5000);
             }
           };
           ticker.add(transition);
