@@ -27,6 +27,7 @@
       <div id="album-name"></div>
       <div id="photo-date"></div>
     </div>
+    <div id="debug-status" style="position: absolute; top: 10px; left: 10px; color: white; font-size: 12px; background: rgba(0,0,0,0.5); padding: 5px; border-radius: 3px;"></div>
   </div>
 
   <script src="/lib/pixi.js/dist/pixi.min.js"></script>
@@ -42,6 +43,12 @@
       const photoInfoContainer = document.getElementById('photo-info-container');
       const albumNameEl = document.getElementById('album-name');
       const photoDateEl = document.getElementById('photo-date');
+      const debugStatusEl = document.getElementById('debug-status');
+
+      function updateDebugStatus(message) {
+        console.log('DEBUG:', message);
+        debugStatusEl.textContent = message;
+      }
 
       let config = {};
       let images = [];
@@ -189,10 +196,17 @@
         progressPie = createProgressPie();
 
         const displayImage = async () => {
-          if (images.length === 0) return;
+          if (images.length === 0) {
+            updateDebugStatus('No images available');
+            return;
+          }
 
           const imageInfo = images[currentImageIndex];
-          const texture = await PIXI.Assets.load(imageInfo.url);
+          updateDebugStatus(`Loading image ${currentImageIndex + 1}/${images.length}: ${imageInfo.url}`);
+          
+          try {
+            const texture = await PIXI.Assets.load(imageInfo.url);
+            updateDebugStatus(`Loaded image ${currentImageIndex + 1}, starting transition`);
 
           // Update photo info
           updatePhotoInfo(imageInfo);
@@ -223,16 +237,14 @@
               ticker.remove(transition);
               // Clean up old sprite and texture
               if (currentSprite) {
-                const oldTexture = currentSprite.texture;
                 imageContainer.removeChild(currentSprite);
                 currentSprite.destroy();
-                // Remove from PIXI cache to free memory
-                if (oldTexture.baseTexture.resource.url) {
-                  PIXI.Assets.unload(oldTexture.baseTexture.resource.url);
-                }
+                // Skip texture cleanup for now to avoid potential issues
               }
               currentSprite = nextSprite;
               nextSprite = null;
+
+              updateDebugStatus(`Image ${currentImageIndex + 1} displayed, starting timer`);
 
               // Preload next image
               const nextImageIndex = (currentImageIndex + 1) % images.length;
@@ -248,6 +260,7 @@
                 updateProgressPie(progress);
                 
                 if (progress >= 1) {
+                  updateDebugStatus(`Timer complete, loading next image`);
                   ticker.remove(updateProgress);
                   displayImage();
                 } else {
@@ -257,9 +270,27 @@
               
               progressTicker = updateProgress;
               ticker.add(updateProgress);
+              
+              // Fallback timeout to ensure slideshow continues
+              setTimeout(() => {
+                if (progressTicker === updateProgress) {
+                  updateDebugStatus(`Timeout fallback triggered`);
+                  ticker.remove(updateProgress);
+                  displayImage();
+                }
+              }, config.imageDisplayTime + 5000);
             }
           };
           ticker.add(transition);
+
+          } catch (error) {
+            updateDebugStatus(`Error loading image: ${error.message}`);
+            console.error('Image load error:', error);
+            // Skip to next image on error
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            setTimeout(displayImage, 1000);
+            return;
+          }
 
           // Move to the next image, looping back to the start
           currentImageIndex = (currentImageIndex + 1) % images.length;
