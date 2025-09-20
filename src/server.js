@@ -6,6 +6,7 @@ import chokidar from 'chokidar';
 import sharp from 'sharp';
 import axios from 'axios';
 import { config, loadConfig } from './config.js';
+import { spawn } from 'child_process';
 
 // Recreate __dirname for ES Modules, as it's not available by default
 const __filename = fileURLToPath(import.meta.url);
@@ -145,6 +146,23 @@ async function initialize() {
             await processAndCacheImages();
         })
         .on('error', (error) => console.error('Watcher error:', error));
+
+    // Start Google Photos sync if enabled
+    if (config.googlePhotos.enabled && config.googlePhotos.albumIds.length > 0) {
+        console.log('Starting Google Photos sync...');
+        setInterval(() => {
+            spawn(process.execPath, ['scripts/google-photos-sync.js', 'sync'], {
+                stdio: 'inherit',
+                cwd: process.cwd()
+            });
+        }, config.googlePhotos.syncInterval);
+        
+        // Initial sync
+        spawn(process.execPath, ['scripts/google-photos-sync.js', 'sync'], {
+            stdio: 'inherit',
+            cwd: process.cwd()
+        });
+    }
 
     app.listen(config.port, () => {
         console.log(`Photo frame server running at http://localhost:${config.port}`);

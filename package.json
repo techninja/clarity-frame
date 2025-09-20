@@ -10,6 +10,8 @@
     "kiosk:stop": "node scripts/kiosk-manager.js stop",
     "kiosk:status": "node scripts/kiosk-manager.js status",
     "kiosk:install": "node scripts/install-kiosk.js",
+    "photos:sync": "node scripts/google-photos-sync.js sync",
+    "photos:list": "node scripts/google-photos-sync.js list",
     "pi-configure": "node src/pi-install.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -21,6 +23,7 @@
     "chalk": "^5.6.2",
     "chokidar": "^3.6.0",
     "express": "^4.19.2",
+    "googleapis": "^144.0.0",
     "pixi.js": "^7.4.2",
     "sharp": "^0.33.4"
   }

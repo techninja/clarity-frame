@@ -31,6 +31,13 @@ const defaultConfig = {
         showPhotoDate: true,
         dateFormat: 'MMMM d, yyyy', // e.g., "September 18, 2023"
     },
+    googlePhotos: {
+        enabled: false,
+        clientId: 'YOUR_GOOGLE_CLIENT_ID',
+        clientSecret: 'YOUR_GOOGLE_CLIENT_SECRET',
+        albumIds: [], // Array of album IDs to sync
+        syncInterval: 3600000, // 1 hour in milliseconds
+    },
 };
 
 // This single config object is exported. It will be mutated by loadConfig,
@@ -50,6 +57,7 @@ async function loadConfig() {
              weather: { ...defaultConfig.weather, ...loadedConfig.weather },
              clock: { ...defaultConfig.clock, ...loadedConfig.clock },
              albums: { ...defaultConfig.albums, ...loadedConfig.albums },
+             googlePhotos: { ...defaultConfig.googlePhotos, ...loadedConfig.googlePhotos },
         };
 
         // Mutate the exported config object
