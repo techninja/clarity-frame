@@ -45,7 +45,7 @@ async function processAndCacheImages() {
                             dateTime: metadata.exif?.DateTime || metadata.exif?.DateTimeOriginal || null,
                         });
                     } catch (err) {
-                        console.error(`Could not process image: ${fullPath}`, err);
+                        console.warn(`Skipping corrupted or unsupported image: ${item.name} - ${err.message}`);
                     }
                 }
             }
