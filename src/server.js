@@ -33,14 +33,14 @@ async function processAndCacheImages() {
                 
                 if (item.isDirectory()) {
                     await scanDirectory(fullPath, item.name);
-                } else if (/\.(jpg|jpeg|png|webp)$/i.test(item.name)) {
+                } else if (/\.(jpg|jpeg|png|webp|heic|nef)$/i.test(item.name)) {
                     try {
                         const metadata = await sharp(fullPath).metadata();
                         const relativePath = path.relative(config.photosDir, fullPath);
                         allImages.push({
                             url: `/photos/${relativePath}`,
-                            width: metadata.width,
-                            height: metadata.height,
+                            width: config.display.width,
+                            height: config.display.height,
                             album: albumName,
                             dateTime: metadata.exif?.DateTime || metadata.exif?.DateTimeOriginal || null,
                         });
@@ -75,10 +75,34 @@ app.use(express.static(path.join(__dirname, 'public'), {
 }));
 // Serve node_modules for offline dependencies
 app.use('/lib', express.static(path.join(__dirname, '..' , 'node_modules')));
-// Serve the photos from the configured directory
-// Note: config must be loaded before this route is defined, which it is in initialize()
-app.use('/photos', (req, res, next) => {
-    express.static(path.resolve(__dirname, '..', config.photosDir))(req, res, next);
+// Serve processed images as PNG at display resolution
+app.get('/photos/:albumPath(*)', async (req, res) => {
+    try {
+        const imagePath = path.join(path.resolve(__dirname, '..', config.photosDir), req.params.albumPath);
+        
+        // Check if file exists
+        await fs.access(imagePath);
+        
+        // Process image with Sharp
+        const { width, height } = config.display;
+        const processedImage = await sharp(imagePath)
+            .resize(width, height, {
+                fit: 'cover',
+                position: config.croppingMode === 'attention' ? 'attention' : 
+                         config.croppingMode === 'entropy' ? 'entropy' : 'centre'
+            })
+            .png()
+            .toBuffer();
+        
+        res.set({
+            'Content-Type': 'image/png',
+            'Cache-Control': 'public, max-age=3600'
+        });
+        res.send(processedImage);
+    } catch (error) {
+        console.error('Error processing image:', error);
+        res.status(404).send('Image not found');
+    }
 });
 
 
