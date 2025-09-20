@@ -36,6 +36,11 @@ async function processAndCacheImages() {
                 } else if (/\.(jpg|jpeg|png|webp|heic|nef)$/i.test(item.name)) {
                     try {
                         const metadata = await sharp(fullPath).metadata();
+                        // Validate image has dimensions (indicates it's readable by Sharp)
+                        if (!metadata.width || !metadata.height) {
+                            throw new Error('Invalid image dimensions');
+                        }
+                        
                         const relativePath = path.relative(config.photosDir, fullPath);
                         allImages.push({
                             url: `/photos/${relativePath}`,
@@ -45,7 +50,7 @@ async function processAndCacheImages() {
                             dateTime: metadata.exif?.DateTime || metadata.exif?.DateTimeOriginal || null,
                         });
                     } catch (err) {
-                        console.warn(`Skipping corrupted or unsupported image: ${item.name} - ${err.message}`);
+                        console.warn(`Skipping unprocessable image: ${item.name} - ${err.message}`);
                     }
                 }
             }
