@@ -221,13 +221,24 @@
 
             if (progress >= 1) {
               ticker.remove(transition);
-              // Clean up old sprite
+              // Clean up old sprite and texture
               if (currentSprite) {
+                const oldTexture = currentSprite.texture;
                 imageContainer.removeChild(currentSprite);
                 currentSprite.destroy();
+                // Remove from PIXI cache to free memory
+                if (oldTexture.baseTexture.resource.url) {
+                  PIXI.Assets.unload(oldTexture.baseTexture.resource.url);
+                }
               }
               currentSprite = nextSprite;
               nextSprite = null;
+
+              // Preload next image
+              const nextImageIndex = (currentImageIndex + 1) % images.length;
+              if (images[nextImageIndex]) {
+                PIXI.Assets.load(images[nextImageIndex].url);
+              }
 
               // Start progress pie animation
               let imageElapsed = 0;
