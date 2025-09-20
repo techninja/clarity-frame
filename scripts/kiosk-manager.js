@@ -100,6 +100,9 @@ class KioskManager {
             '--force-device-scale-factor=1',
             '--disable-dev-shm-usage',
             '--disable-gpu-sandbox',
+            `--window-size=${config.display.width},${config.display.height}`,
+            '--window-position=0,0',
+            '--start-maximized',
             url
         ];
 
@@ -124,6 +127,15 @@ class KioskManager {
                         setTimeout(() => this.startKiosk(), 5000);
                     }
                 });
+
+                // Force fullscreen with xdotool after a delay
+                setTimeout(() => {
+                    try {
+                        execSync('DISPLAY=:0 xdotool search --name "localhost" windowactivate key F11', { stdio: 'ignore' });
+                    } catch (err) {
+                        // xdotool might not be available, ignore
+                    }
+                }, 2000);
 
                 console.log(`Kiosk started with ${browser}`);
                 return;

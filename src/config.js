@@ -31,6 +31,10 @@ const defaultConfig = {
         showPhotoDate: true,
         dateFormat: 'MMMM d, yyyy', // e.g., "September 18, 2023"
     },
+    display: {
+        width: 1920,
+        height: 1080
+    },
     googlePhotos: {
         enabled: false,
         clientId: 'YOUR_GOOGLE_CLIENT_ID',
@@ -57,6 +61,7 @@ async function loadConfig() {
              weather: { ...defaultConfig.weather, ...loadedConfig.weather },
              clock: { ...defaultConfig.clock, ...loadedConfig.clock },
              albums: { ...defaultConfig.albums, ...loadedConfig.albums },
+             display: { ...defaultConfig.display, ...loadedConfig.display },
              googlePhotos: { ...defaultConfig.googlePhotos, ...loadedConfig.googlePhotos },
         };
 
