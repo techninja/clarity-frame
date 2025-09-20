@@ -25,6 +25,12 @@ const defaultConfig = {
         showDate: true,
         dateFormat: 'cccc, MMMM d', // e.g., "Monday, September 18"
     },
+    albums: {
+        enabled: true,
+        showAlbumName: true,
+        showPhotoDate: true,
+        dateFormat: 'MMMM d, yyyy', // e.g., "September 18, 2023"
+    },
 };
 
 // This single config object is exported. It will be mutated by loadConfig,
@@ -43,6 +49,7 @@ async function loadConfig() {
              ...loadedConfig,
              weather: { ...defaultConfig.weather, ...loadedConfig.weather },
              clock: { ...defaultConfig.clock, ...loadedConfig.clock },
+             albums: { ...defaultConfig.albums, ...loadedConfig.albums },
         };
 
         // Mutate the exported config object

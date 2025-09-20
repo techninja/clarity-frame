@@ -22,6 +22,10 @@
       <div id="weather-temp"></div>
       <div id="weather-desc"></div>
     </div>
+    <div id="photo-info-container">
+      <div id="album-name"></div>
+      <div id="photo-date"></div>
+    </div>
   </div>
 
   <script src="/lib/pixi.js/dist/pixi.min.js"></script>
@@ -34,6 +38,9 @@
       const weatherIconEl = document.getElementById('weather-icon');
       const weatherTempEl = document.getElementById('weather-temp');
       const weatherDescEl = document.getElementById('weather-desc');
+      const photoInfoContainer = document.getElementById('photo-info-container');
+      const albumNameEl = document.getElementById('album-name');
+      const photoDateEl = document.getElementById('photo-date');
 
       let config = {};
       let images = [];
@@ -62,6 +69,7 @@
 
         // Setup overlays
         setupClock();
+        setupPhotoInfo();
         if (config.clock.enabled) {
           updateClock(); // Initial call
           setInterval(updateClock, 1000);
@@ -80,6 +88,29 @@
         const clockContainer = document.getElementById('clock-container');
         clockContainer.style.display = config.clock.enabled ? 'block' : 'none';
         dateEl.style.display = config.clock.showDate ? 'block' : 'none';
+      }
+
+      function setupPhotoInfo() {
+        photoInfoContainer.style.display = config.albums.enabled ? 'block' : 'none';
+      }
+
+      function updatePhotoInfo(imageInfo) {
+        if (!config.albums.enabled) return;
+        
+        if (config.albums.showAlbumName && imageInfo.album) {
+          albumNameEl.textContent = imageInfo.album;
+          albumNameEl.style.display = 'block';
+        } else {
+          albumNameEl.style.display = 'none';
+        }
+        
+        if (config.albums.showPhotoDate && imageInfo.dateTime) {
+          const date = new Date(imageInfo.dateTime.replace(/:(\d{2})$/, ''));
+          photoDateEl.textContent = date.toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
+          photoDateEl.style.display = 'block';
+        } else {
+          photoDateEl.style.display = 'none';
+        }
       }
 
       function updateClock() {
@@ -118,6 +149,9 @@
 
           const imageInfo = images[currentImageIndex];
           const texture = await PIXI.Assets.load(imageInfo.url);
+
+          // Update photo info
+          updatePhotoInfo(imageInfo);
 
           // Create the next sprite and set it to be invisible
           nextSprite = new PIXI.Sprite(texture);

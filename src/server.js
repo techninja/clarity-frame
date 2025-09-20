@@ -22,29 +22,36 @@ let lastWeatherFetch = 0;
 async function processAndCacheImages() {
     try {
         console.log(`Scanning for images in "${config.photosDir}"...`);
-        const files = await fs.readdir(config.photosDir);
-        const imageFiles = files.filter(file => /\.(jpg|jpeg|png|webp)$/i.test(file));
-
-        const processedImages = await Promise.all(imageFiles.map(async (file) => {
-            const imagePath = path.join(config.photosDir, file);
-            try {
-                // Using sharp's "attention" strategy is a great way to automatically
-                // find the most interesting region, which often includes faces.
-                // This avoids the heavy dependency of full face detection libraries
-                // while achieving a similar "smart crop" result.
-                const metadata = await sharp(imagePath).metadata();
-                return {
-                    url: `/photos/${file}`,
-                    width: metadata.width,
-                    height: metadata.height,
-                };
-            } catch (err) {
-                console.error(`Could not process image: ${file}`, err);
-                return null;
+        const allImages = [];
+        
+        async function scanDirectory(dir, albumName = null) {
+            const items = await fs.readdir(dir, { withFileTypes: true });
+            
+            for (const item of items) {
+                const fullPath = path.join(dir, item.name);
+                
+                if (item.isDirectory()) {
+                    await scanDirectory(fullPath, item.name);
+                } else if (/\.(jpg|jpeg|png|webp)$/i.test(item.name)) {
+                    try {
+                        const metadata = await sharp(fullPath).metadata();
+                        const relativePath = path.relative(config.photosDir, fullPath);
+                        allImages.push({
+                            url: `/photos/${relativePath}`,
+                            width: metadata.width,
+                            height: metadata.height,
+                            album: albumName,
+                            dateTime: metadata.exif?.DateTime || metadata.exif?.DateTimeOriginal || null,
+                        });
+                    } catch (err) {
+                        console.error(`Could not process image: ${fullPath}`, err);
+                    }
+                }
             }
-        }));
-
-        imageCache = processedImages.filter(img => img !== null);
+        }
+        
+        await scanDirectory(config.photosDir);
+        imageCache = allImages;
         console.log(`Found and processed ${imageCache.length} images.`);
     } catch (err) {
         if (err.code === 'ENOENT') {
