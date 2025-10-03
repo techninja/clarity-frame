@@ -9,9 +9,11 @@ void segfault_handler(int sig) {
     exit(1);
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     signal(SIGSEGV, segfault_handler);
     std::cout << "Starting Clarity Frame..." << std::endl;
+    
+    bool windowed = (argc > 1 && std::string(argv[1]) == "--windowed");
     
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "SDL init failed: " << SDL_GetError() << std::endl;
@@ -34,9 +36,22 @@ int main() {
     }
     std::cout << "Display: " << displayMode.w << "x" << displayMode.h << std::endl;
 
-    SDL_Window* window = SDL_CreateWindow("Clarity Frame",
-        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        800, 600, SDL_WINDOW_SHOWN);
+    SDL_Window* window;
+    int windowW, windowH;
+    
+    if (windowed) {
+        windowW = 800;
+        windowH = 600;
+        window = SDL_CreateWindow("Clarity Frame",
+            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+            windowW, windowH, SDL_WINDOW_SHOWN);
+    } else {
+        windowW = displayMode.w;
+        windowH = displayMode.h;
+        window = SDL_CreateWindow("Clarity Frame",
+            SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+            windowW, windowH, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    }
     
     if (!window) {
         std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
@@ -70,8 +85,8 @@ int main() {
     // Scale image to fit window while maintaining aspect ratio
     int imgW = originalSurface->w;
     int imgH = originalSurface->h;
-    int dispW = 800;
-    int dispH = 600;
+    int dispW = windowW;
+    int dispH = windowH;
     
     float scaleX = (float)dispW / imgW;
     float scaleY = (float)dispH / imgH;
