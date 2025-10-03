@@ -38,58 +38,40 @@ int main() {
 
     std::cout << "Created window and renderer successfully" << std::endl;
 
-    // Load and process image with tiling
-    SDL_Surface* originalSurface = IMG_Load("../photos/test.jpg");
-    SDL_Texture* tiles[4] = {nullptr, nullptr, nullptr, nullptr};
-    SDL_Rect tileRects[4] = {{0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
-    int tileCount = 0;
+    // Load image with crop-to-fill scaling
+    SDL_Surface* imageSurface = IMG_Load("../photos/test.jpg");
+    SDL_Texture* imageTexture = nullptr;
     
-    if (originalSurface) {
-        std::cout << "Image loaded: " << originalSurface->w << "x" << originalSurface->h << std::endl;
+    if (imageSurface) {
+        std::cout << "Image loaded: " << imageSurface->w << "x" << imageSurface->h << std::endl;
         
-        // Scale to fill display (crop to fit)
-        int imgW = originalSurface->w;
-        int imgH = originalSurface->h;
-        int dispW = displayMode.w;
-        int dispH = displayMode.h;
+        // Scale to display resolution (crop to fill)
+        SDL_Surface* scaledSurface = SDL_CreateRGBSurface(0, displayMode.w, displayMode.h, 32, 0, 0, 0, 0);
         
-        float scaleX = (float)dispW / imgW;
-        float scaleY = (float)dispH / imgH;
-        float scale = (scaleX > scaleY) ? scaleX : scaleY; // Use larger scale to fill
+        // Calculate crop rectangle to maintain aspect ratio
+        float imgAspect = (float)imageSurface->w / imageSurface->h;
+        float dispAspect = (float)displayMode.w / displayMode.h;
         
-        int newW = (int)(imgW * scale);
-        int newH = (int)(imgH * scale);
-        
-        std::cout << "Scaling to: " << newW << "x" << newH << std::endl;
-        
-        SDL_Surface* scaledSurface = SDL_CreateRGBSurface(0, newW, newH, 32, 0, 0, 0, 0);
-        SDL_BlitScaled(originalSurface, nullptr, scaledSurface, nullptr);
-        SDL_FreeSurface(originalSurface);
-        
-        // Create tiled textures
-        const int tileSize = 2048;
-        int tilesX = (newW + tileSize - 1) / tileSize;
-        int tilesY = (newH + tileSize - 1) / tileSize;
-        
-        for (int ty = 0; ty < tilesY && tileCount < 4; ty++) {
-            for (int tx = 0; tx < tilesX && tileCount < 4; tx++) {
-                int tileW = (tx == tilesX - 1) ? newW - tx * tileSize : tileSize;
-                int tileH = (ty == tilesY - 1) ? newH - ty * tileSize : tileSize;
-                
-                SDL_Surface* tileSurface = SDL_CreateRGBSurface(0, tileW, tileH, 32, 0, 0, 0, 0);
-                SDL_Rect srcRect = {tx * tileSize, ty * tileSize, tileW, tileH};
-                SDL_BlitSurface(scaledSurface, &srcRect, tileSurface, nullptr);
-                
-                tiles[tileCount] = SDL_CreateTextureFromSurface(renderer, tileSurface);
-                SDL_FreeSurface(tileSurface);
-                
-                tileRects[tileCount] = {(dispW - newW) / 2 + tx * tileSize, (dispH - newH) / 2 + ty * tileSize, tileW, tileH};
-                tileCount++;
-                std::cout << "Created tile " << tileCount << ": " << tileW << "x" << tileH << std::endl;
-            }
+        SDL_Rect srcRect;
+        if (imgAspect > dispAspect) {
+            // Image is wider - crop sides
+            int cropW = (int)(imageSurface->h * dispAspect);
+            srcRect = {(imageSurface->w - cropW) / 2, 0, cropW, imageSurface->h};
+        } else {
+            // Image is taller - crop top/bottom
+            int cropH = (int)(imageSurface->w / dispAspect);
+            srcRect = {0, (imageSurface->h - cropH) / 2, imageSurface->w, cropH};
         }
         
+        SDL_BlitScaled(imageSurface, &srcRect, scaledSurface, nullptr);
+        SDL_FreeSurface(imageSurface);
+        
+        imageTexture = SDL_CreateTextureFromSurface(renderer, scaledSurface);
         SDL_FreeSurface(scaledSurface);
+        
+        if (imageTexture) {
+            std::cout << "Texture created at display resolution" << std::endl;
+        }
     } else {
         std::cout << "Image load failed: " << IMG_GetError() << std::endl;
     }
@@ -112,11 +94,8 @@ int main() {
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
         SDL_RenderClear(renderer);
         
-        // Render all tiles
-        for (int t = 0; t < tileCount; t++) {
-            if (tiles[t]) {
-                SDL_RenderCopy(renderer, tiles[t], nullptr, &tileRects[t]);
-            }
+        if (imageTexture) {
+            SDL_RenderCopy(renderer, imageTexture, nullptr, nullptr);
         }
         
         SDL_RenderPresent(renderer);
@@ -128,9 +107,7 @@ int main() {
     }
 
     std::cout << "Cleaning up..." << std::endl;
-    for (int i = 0; i < tileCount; i++) {
-        if (tiles[i]) SDL_DestroyTexture(tiles[i]);
-    }
+    if (imageTexture) SDL_DestroyTexture(imageTexture);
     SDL_DestroyRenderer(renderer);
     // Skip window destruction
     IMG_Quit();
