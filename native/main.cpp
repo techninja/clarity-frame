@@ -57,7 +57,20 @@ int main() {
     }
 
     // Render loop - image if available, red screen if not
-    for (int i = 0; i < 300; i++) { // 5 seconds at 60fps
+    bool running = true;
+    for (int i = 0; i < 300 && running; i++) { // 5 seconds at 60fps
+        // Handle events
+        SDL_Event event;
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_QUIT || 
+                (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)) {
+                running = false;
+                break;
+            }
+        }
+        
+        if (!running) break;
+        
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
         SDL_RenderClear(renderer);
         
