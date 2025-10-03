@@ -149,68 +149,38 @@ int main() {
     int frameCount = 0;
 
     while (running) {
-        std::cout << "Frame start..." << std::endl;
-        
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT) {
+            if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN) {
                 running = false;
             }
-            if (event.type == SDL_KEYDOWN) {
-                Uint32 currentTime = SDL_GetTicks();
-                if (currentTime - startTime >= minDisplayTime) {
-                    running = false;
-                }
-            }
         }
-        std::cout << "Events processed..." << std::endl;
 
         Uint32 currentTime = SDL_GetTicks();
         Uint32 elapsed = currentTime - startTime;
         
+        // Exit after minimum time
+        if (elapsed >= minDisplayTime) {
+            running = false;
+            continue;
+        }
+        
         // Calculate fade alpha (0-255)
         Uint8 alpha = (elapsed >= fadeDuration) ? 255 : (255 * elapsed) / fadeDuration;
-        std::cout << "Alpha calculated: " << (int)alpha << std::endl;
 
-        // Clear to black
-        if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255) != 0) {
-            std::cerr << "SetRenderDrawColor failed: " << SDL_GetError() << std::endl;
-            break;
-        }
-        std::cout << "Draw color set..." << std::endl;
-        
-        if (SDL_RenderClear(renderer) != 0) {
-            std::cerr << "RenderClear failed: " << SDL_GetError() << std::endl;
-            break;
-        }
-        std::cout << "Screen cleared..." << std::endl;
+        // Clear and render
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderClear(renderer);
 
-        // Render all tiles
+        // Render tiles
         for (int i = 0; i < tileCount; i++) {
-            std::cout << "Rendering tile " << i << "..." << std::endl;
             if (tiles[i]) {
-                if (SDL_SetTextureAlphaMod(tiles[i], alpha) != 0) {
-                    std::cerr << "SetTextureAlphaMod failed: " << SDL_GetError() << std::endl;
-                    continue;
-                }
-                std::cout << "Alpha set for tile " << i << "..." << std::endl;
-                
-                if (SDL_RenderCopy(renderer, tiles[i], nullptr, &tileRects[i]) != 0) {
-                    std::cerr << "RenderCopy failed: " << SDL_GetError() << std::endl;
-                    continue;
-                }
-                std::cout << "Tile " << i << " rendered..." << std::endl;
+                SDL_SetTextureAlphaMod(tiles[i], alpha);
+                SDL_RenderCopy(renderer, tiles[i], nullptr, &tileRects[i]);
             }
         }
 
-        std::cout << "About to present..." << std::endl;
         SDL_RenderPresent(renderer);
-        std::cout << "Frame presented!" << std::endl;
-        
-        frameCount++;
-        if (frameCount % 60 == 0) {
-            std::cout << "Frame " << frameCount << ", alpha: " << (int)alpha << std::endl;
-        }
-        SDL_Delay(16); // ~60 FPS
+        SDL_Delay(16);
     }
     
     std::cout << "Exiting render loop..." << std::endl;
