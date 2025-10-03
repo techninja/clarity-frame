@@ -100,8 +100,8 @@ int main() {
     
     SDL_FreeSurface(scaledSurface);
 
-    if (!imageTexture) {
-        std::cerr << "Texture creation failed: " << SDL_GetError() << std::endl;
+    if (tileCount == 0) {
+        std::cerr << "No tiles created" << std::endl;
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
         IMG_Quit();
