@@ -218,13 +218,33 @@ int main() {
     
     std::cout << "Exiting render loop..." << std::endl;
 
+    std::cout << "Destroying textures..." << std::endl;
     for (int i = 0; i < tileCount; i++) {
-        if (tiles[i]) SDL_DestroyTexture(tiles[i]);
+        if (tiles[i]) {
+            std::cout << "Destroying tile " << i << std::endl;
+            SDL_DestroyTexture(tiles[i]);
+            tiles[i] = nullptr;
+        }
     }
-    SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    
+    std::cout << "Destroying renderer..." << std::endl;
+    if (renderer) {
+        SDL_DestroyRenderer(renderer);
+        renderer = nullptr;
+    }
+    
+    std::cout << "Destroying window..." << std::endl;
+    if (window) {
+        SDL_DestroyWindow(window);
+        window = nullptr;
+    }
+    
+    std::cout << "Quitting IMG..." << std::endl;
     IMG_Quit();
+    
+    std::cout << "Quitting SDL..." << std::endl;
     SDL_Quit();
-
+    
+    std::cout << "Clean exit" << std::endl;
     return 0;
 }
