@@ -207,13 +207,10 @@ int main() {
         std::cout << "Frame presented!" << std::endl;
         
         frameCount++;
-        SDL_Delay(16); // ~60 FPS
-        
-        // Exit after first frame for debugging
-        if (frameCount >= 1) {
-            std::cout << "Exiting after first frame for debug" << std::endl;
-            running = false;
+        if (frameCount % 60 == 0) {
+            std::cout << "Frame " << frameCount << ", alpha: " << (int)alpha << std::endl;
         }
+        SDL_Delay(16); // ~60 FPS
     }
     
     std::cout << "Exiting render loop..." << std::endl;
@@ -233,11 +230,8 @@ int main() {
         renderer = nullptr;
     }
     
-    std::cout << "Destroying window..." << std::endl;
-    if (window) {
-        SDL_DestroyWindow(window);
-        window = nullptr;
-    }
+    std::cout << "Skipping window destruction (Wayland issue)..." << std::endl;
+    // Skip SDL_DestroyWindow - causes segfault on Wayland
     
     std::cout << "Quitting IMG..." << std::endl;
     IMG_Quit();
