@@ -84,7 +84,7 @@ int main() {
 cleanup:
     SDL_DestroyTexture(imageTexture);
     SDL_DestroyRenderer(renderer);
-    SDL_DestroyWindow(window);
+    // Skip SDL_DestroyWindow - causes segfault on Wayland
     IMG_Quit();
     SDL_Quit();
 
