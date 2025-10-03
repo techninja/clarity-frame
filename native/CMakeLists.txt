@@ -11,6 +11,7 @@ add_executable(clarity-frame main.cpp)
 add_executable(simple-test simple_test.cpp)
 add_executable(framebuffer framebuffer.cpp)
 add_executable(drm-test drm_test.cpp)
+add_executable(pi-test pi_test.cpp)
 
 target_link_libraries(clarity-frame ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
 target_include_directories(clarity-frame PRIVATE ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS})
@@ -27,3 +28,7 @@ target_compile_options(framebuffer PRIVATE ${SDL2_CFLAGS_OTHER} ${SDL2_IMAGE_CFL
 target_link_libraries(drm-test ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
 target_include_directories(drm-test PRIVATE ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS})
 target_compile_options(drm-test PRIVATE ${SDL2_CFLAGS_OTHER} ${SDL2_IMAGE_CFLAGS_OTHER})
+
+target_link_libraries(pi-test ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
+target_include_directories(pi-test PRIVATE ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS})
+target_compile_options(pi-test PRIVATE ${SDL2_CFLAGS_OTHER} ${SDL2_IMAGE_CFLAGS_OTHER})

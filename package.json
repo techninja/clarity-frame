@@ -18,6 +18,7 @@
     "native:windowed": "cd native && ./clarity-frame --windowed",
     "native:framebuffer": "cd native && sudo ./framebuffer",
     "native:drm": "cd native && sudo ./drm-test",
+    "native:pi": "cd native && sudo ./pi-test",
     "native:install": "sudo apt-get update && sudo apt-get install -y libsdl2-dev libsdl2-image-dev cmake build-essential",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
