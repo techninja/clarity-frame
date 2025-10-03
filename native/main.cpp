@@ -112,13 +112,20 @@ int main() {
     // Fade in animation
     Uint32 startTime = SDL_GetTicks();
     const Uint32 fadeDuration = 2000; // 2 seconds
+    const Uint32 minDisplayTime = 5000; // 5 seconds minimum
     bool running = true;
     SDL_Event event;
 
     while (running) {
         while (SDL_PollEvent(&event)) {
-            if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN) {
+            if (event.type == SDL_QUIT) {
                 running = false;
+            }
+            if (event.type == SDL_KEYDOWN) {
+                Uint32 currentTime = SDL_GetTicks();
+                if (currentTime - startTime >= minDisplayTime) {
+                    running = false;
+                }
             }
         }
 
@@ -134,8 +141,10 @@ int main() {
 
         // Render all tiles
         for (int i = 0; i < tileCount; i++) {
-            SDL_SetTextureAlphaMod(tiles[i], alpha);
-            SDL_RenderCopy(renderer, tiles[i], nullptr, &tileRects[i]);
+            if (tiles[i]) {
+                SDL_SetTextureAlphaMod(tiles[i], alpha);
+                SDL_RenderCopy(renderer, tiles[i], nullptr, &tileRects[i]);
+            }
         }
 
         SDL_RenderPresent(renderer);
