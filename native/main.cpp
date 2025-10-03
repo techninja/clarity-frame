@@ -4,9 +4,6 @@
 #include <cstdlib>
 
 int main() {
-    // Suppress Wayland proxy warnings
-    setenv("WAYLAND_DISPLAY", "", 1);
-    
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "SDL init failed: " << SDL_GetError() << std::endl;
         return 1;
