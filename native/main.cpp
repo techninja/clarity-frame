@@ -1,8 +1,18 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <iostream>
+#include <signal.h>
+
+void segfault_handler(int sig) {
+    std::cerr << "SEGFAULT: Signal " << sig << " caught!" << std::endl;
+    SDL_Quit();
+    exit(1);
+}
 
 int main() {
+    signal(SIGSEGV, segfault_handler);
+    std::cout << "Starting Clarity Frame..." << std::endl;
+    
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "SDL init failed: " << SDL_GetError() << std::endl;
         return 1;
@@ -22,6 +32,7 @@ int main() {
         SDL_Quit();
         return 1;
     }
+    std::cout << "Display: " << displayMode.w << "x" << displayMode.h << std::endl;
 
     SDL_Window* window = SDL_CreateWindow("Clarity Frame",
         SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
@@ -44,6 +55,7 @@ int main() {
     }
 
     // Load test image
+    std::cout << "Loading image..." << std::endl;
     SDL_Surface* originalSurface = IMG_Load("../photos/test.jpg");
     if (!originalSurface) {
         std::cerr << "Image load failed: " << IMG_GetError() << std::endl;
@@ -53,6 +65,7 @@ int main() {
         SDL_Quit();
         return 1;
     }
+    std::cout << "Image loaded: " << originalSurface->w << "x" << originalSurface->h << std::endl;
 
     // Scale image to fit display while maintaining aspect ratio
     int imgW = originalSurface->w;
@@ -67,7 +80,17 @@ int main() {
     int newW = (int)(imgW * scale);
     int newH = (int)(imgH * scale);
     
+    std::cout << "Scaling to: " << newW << "x" << newH << std::endl;
     SDL_Surface* scaledSurface = SDL_CreateRGBSurface(0, newW, newH, 32, 0, 0, 0, 0);
+    if (!scaledSurface) {
+        std::cerr << "Failed to create scaled surface: " << SDL_GetError() << std::endl;
+        SDL_FreeSurface(originalSurface);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        IMG_Quit();
+        SDL_Quit();
+        return 1;
+    }
     SDL_BlitScaled(originalSurface, nullptr, scaledSurface, nullptr);
     SDL_FreeSurface(originalSurface);
 
@@ -91,10 +114,16 @@ int main() {
             SDL_BlitSurface(scaledSurface, &srcRect, tileSurface, nullptr);
             
             tiles[tileCount] = SDL_CreateTextureFromSurface(renderer, tileSurface);
+            if (!tiles[tileCount]) {
+                std::cerr << "Failed to create tile texture: " << SDL_GetError() << std::endl;
+                SDL_FreeSurface(tileSurface);
+                continue;
+            }
             SDL_FreeSurface(tileSurface);
             
             tileRects[tileCount] = {(dispW - newW) / 2 + tx * tileSize, (dispH - newH) / 2 + ty * tileSize, tileW, tileH};
             tileCount++;
+            std::cout << "Created tile " << tileCount << ": " << tileW << "x" << tileH << std::endl;
         }
     }
     
@@ -109,12 +138,15 @@ int main() {
         return 1;
     }
 
+    std::cout << "Starting render loop with " << tileCount << " tiles..." << std::endl;
+    
     // Fade in animation
     Uint32 startTime = SDL_GetTicks();
     const Uint32 fadeDuration = 2000; // 2 seconds
     const Uint32 minDisplayTime = 5000; // 5 seconds minimum
     bool running = true;
     SDL_Event event;
+    int frameCount = 0;
 
     while (running) {
         while (SDL_PollEvent(&event)) {
@@ -148,8 +180,14 @@ int main() {
         }
 
         SDL_RenderPresent(renderer);
+        frameCount++;
+        if (frameCount % 60 == 0) {
+            std::cout << "Frame " << frameCount << ", alpha: " << (int)alpha << std::endl;
+        }
         SDL_Delay(16); // ~60 FPS
     }
+    
+    std::cout << "Exiting render loop..." << std::endl;
 
     for (int i = 0; i < tileCount; i++) {
         if (tiles[i]) SDL_DestroyTexture(tiles[i]);
