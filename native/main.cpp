@@ -35,8 +35,8 @@ int main() {
     std::cout << "Display: " << displayMode.w << "x" << displayMode.h << std::endl;
 
     SDL_Window* window = SDL_CreateWindow("Clarity Frame",
-        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-        displayMode.w, displayMode.h, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        800, 600, SDL_WINDOW_SHOWN);
     
     if (!window) {
         std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
@@ -45,7 +45,7 @@ int main() {
         return 1;
     }
 
-    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_SOFTWARE);
     if (!renderer) {
         std::cerr << "Renderer creation failed: " << SDL_GetError() << std::endl;
         SDL_DestroyWindow(window);
@@ -67,11 +67,11 @@ int main() {
     }
     std::cout << "Image loaded: " << originalSurface->w << "x" << originalSurface->h << std::endl;
 
-    // Scale image to fit display while maintaining aspect ratio
+    // Scale image to fit window while maintaining aspect ratio
     int imgW = originalSurface->w;
     int imgH = originalSurface->h;
-    int dispW = displayMode.w;
-    int dispH = displayMode.h;
+    int dispW = 800;
+    int dispH = 600;
     
     float scaleX = (float)dispW / imgW;
     float scaleY = (float)dispH / imgH;
