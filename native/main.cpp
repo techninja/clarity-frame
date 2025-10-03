@@ -65,7 +65,35 @@ int main() {
         SDL_RenderClear(renderer);
         
         if (imageTexture) {
-            SDL_RenderCopy(renderer, imageTexture, nullptr, nullptr);
+            // Get texture dimensions
+            int texW, texH;
+            SDL_QueryTexture(imageTexture, nullptr, nullptr, &texW, &texH);
+            
+            if (i == 0) { // Debug output on first frame only
+                std::cout << "Display: " << displayMode.w << "x" << displayMode.h << std::endl;
+                std::cout << "Texture: " << texW << "x" << texH << std::endl;
+            }
+            
+            // Scale to fit display while maintaining aspect ratio
+            float scaleX = (float)displayMode.w / texW;
+            float scaleY = (float)displayMode.h / texH;
+            float scale = (scaleX < scaleY) ? scaleX : scaleY;
+            
+            int newW = (int)(texW * scale);
+            int newH = (int)(texH * scale);
+            
+            if (i == 0) {
+                std::cout << "Scale: " << scale << ", Final: " << newW << "x" << newH << std::endl;
+            }
+            
+            // Center on screen
+            SDL_Rect destRect = {
+                (displayMode.w - newW) / 2,
+                (displayMode.h - newH) / 2,
+                newW, newH
+            };
+            
+            SDL_RenderCopy(renderer, imageTexture, nullptr, &destRect);
         }
         
         SDL_RenderPresent(renderer);
