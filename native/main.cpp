@@ -44,8 +44,8 @@ int main() {
     }
 
     // Load test image
-    SDL_Surface* imageSurface = IMG_Load("../photos/test.jpg");
-    if (!imageSurface) {
+    SDL_Surface* originalSurface = IMG_Load("../photos/test.jpg");
+    if (!originalSurface) {
         std::cerr << "Image load failed: " << IMG_GetError() << std::endl;
         SDL_DestroyRenderer(renderer);
         SDL_DestroyWindow(window);
@@ -54,8 +54,51 @@ int main() {
         return 1;
     }
 
-    SDL_Texture* imageTexture = SDL_CreateTextureFromSurface(renderer, imageSurface);
-    SDL_FreeSurface(imageSurface);
+    // Scale image to fit display while maintaining aspect ratio
+    int imgW = originalSurface->w;
+    int imgH = originalSurface->h;
+    int dispW = displayMode.w;
+    int dispH = displayMode.h;
+    
+    float scaleX = (float)dispW / imgW;
+    float scaleY = (float)dispH / imgH;
+    float scale = (scaleX < scaleY) ? scaleX : scaleY;
+    
+    int newW = (int)(imgW * scale);
+    int newH = (int)(imgH * scale);
+    
+    SDL_Surface* scaledSurface = SDL_CreateRGBSurface(0, newW, newH, 32, 0, 0, 0, 0);
+    SDL_BlitScaled(originalSurface, nullptr, scaledSurface, nullptr);
+    SDL_FreeSurface(originalSurface);
+
+    // Create tiled textures for large images
+    const int tileSize = 2048;
+    int tilesX = (newW + tileSize - 1) / tileSize;
+    int tilesY = (newH + tileSize - 1) / tileSize;
+    
+    SDL_Texture* tiles[4] = {nullptr}; // Support up to 2x2 tiles
+    SDL_Rect tileRects[4];
+    int tileCount = 0;
+    
+    for (int ty = 0; ty < tilesY && tileCount < 4; ty++) {
+        for (int tx = 0; tx < tilesX && tileCount < 4; tx++) {
+            int tileW = (tx == tilesX - 1) ? newW - tx * tileSize : tileSize;
+            int tileH = (ty == tilesY - 1) ? newH - ty * tileSize : tileSize;
+            
+            SDL_Surface* tileSurface = SDL_CreateRGBSurface(0, tileW, tileH, 32, 0, 0, 0, 0);
+            
+            SDL_Rect srcRect = {tx * tileSize, ty * tileSize, tileW, tileH};
+            SDL_BlitSurface(scaledSurface, &srcRect, tileSurface, nullptr);
+            
+            tiles[tileCount] = SDL_CreateTextureFromSurface(renderer, tileSurface);
+            SDL_FreeSurface(tileSurface);
+            
+            tileRects[tileCount] = {(dispW - newW) / 2 + tx * tileSize, (dispH - newH) / 2 + ty * tileSize, tileW, tileH};
+            tileCount++;
+        }
+    }
+    
+    SDL_FreeSurface(scaledSurface);
 
     if (!imageTexture) {
         std::cerr << "Texture creation failed: " << SDL_GetError() << std::endl;
@@ -89,15 +132,19 @@ int main() {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        // Set texture alpha and render
-        SDL_SetTextureAlphaMod(imageTexture, alpha);
-        SDL_RenderCopy(renderer, imageTexture, nullptr, nullptr);
+        // Render all tiles
+        for (int i = 0; i < tileCount; i++) {
+            SDL_SetTextureAlphaMod(tiles[i], alpha);
+            SDL_RenderCopy(renderer, tiles[i], nullptr, &tileRects[i]);
+        }
 
         SDL_RenderPresent(renderer);
         SDL_Delay(16); // ~60 FPS
     }
 
-    SDL_DestroyTexture(imageTexture);
+    for (int i = 0; i < tileCount; i++) {
+        if (tiles[i]) SDL_DestroyTexture(tiles[i]);
+    }
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     IMG_Quit();
