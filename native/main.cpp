@@ -38,20 +38,58 @@ int main() {
 
     std::cout << "Created window and renderer successfully" << std::endl;
 
-    // Try to load image
-    SDL_Surface* imageSurface = IMG_Load("../photos/test.jpg");
-    SDL_Texture* imageTexture = nullptr;
+    // Load and process image with tiling
+    SDL_Surface* originalSurface = IMG_Load("../photos/test.jpg");
+    SDL_Texture* tiles[4] = {nullptr, nullptr, nullptr, nullptr};
+    SDL_Rect tileRects[4] = {{0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
+    int tileCount = 0;
     
-    if (imageSurface) {
-        std::cout << "Image loaded: " << imageSurface->w << "x" << imageSurface->h << std::endl;
-        imageTexture = SDL_CreateTextureFromSurface(renderer, imageSurface);
-        SDL_FreeSurface(imageSurface);
+    if (originalSurface) {
+        std::cout << "Image loaded: " << originalSurface->w << "x" << originalSurface->h << std::endl;
         
-        if (imageTexture) {
-            std::cout << "Texture created successfully" << std::endl;
-        } else {
-            std::cout << "Texture creation failed: " << SDL_GetError() << std::endl;
+        // Scale to fill display (crop to fit)
+        int imgW = originalSurface->w;
+        int imgH = originalSurface->h;
+        int dispW = displayMode.w;
+        int dispH = displayMode.h;
+        
+        float scaleX = (float)dispW / imgW;
+        float scaleY = (float)dispH / imgH;
+        float scale = (scaleX > scaleY) ? scaleX : scaleY; // Use larger scale to fill
+        
+        int newW = (int)(imgW * scale);
+        int newH = (int)(imgH * scale);
+        
+        std::cout << "Scaling to: " << newW << "x" << newH << std::endl;
+        
+        SDL_Surface* scaledSurface = SDL_CreateRGBSurface(0, newW, newH, 32, 0, 0, 0, 0);
+        SDL_BlitScaled(originalSurface, nullptr, scaledSurface, nullptr);
+        SDL_FreeSurface(originalSurface);
+        
+        // Create tiled textures
+        const int tileSize = 2048;
+        int tilesX = (newW + tileSize - 1) / tileSize;
+        int tilesY = (newH + tileSize - 1) / tileSize;
+        
+        for (int ty = 0; ty < tilesY && tileCount < 4; ty++) {
+            for (int tx = 0; tx < tilesX && tileCount < 4; tx++) {
+                int tileW = (tx == tilesX - 1) ? newW - tx * tileSize : tileSize;
+                int tileH = (ty == tilesY - 1) ? newH - ty * tileSize : tileSize;
+                
+                SDL_Surface* tileSurface = SDL_CreateRGBSurface(0, tileW, tileH, 32, 0, 0, 0, 0);
+                SDL_Rect srcRect = {tx * tileSize, ty * tileSize, tileW, tileH};
+                SDL_BlitSurface(scaledSurface, &srcRect, tileSurface, nullptr);
+                
+                tiles[tileCount] = SDL_CreateTextureFromSurface(renderer, tileSurface);
+                SDL_FreeSurface(tileSurface);
+                
+                tileRects[tileCount] = {(dispW - newW) / 2 + tx * tileSize, (dispH - newH) / 2 + ty * tileSize, tileW, tileH};
+                tileCount++;
+                std::cout << "Created tile " << tileCount << ": " << tileW << "x" << tileH << std::endl;
+            }
         }
+        
+        SDL_FreeSurface(scaledSurface);
     } else {
         std::cout << "Image load failed: " << IMG_GetError() << std::endl;
     }
@@ -74,36 +112,11 @@ int main() {
         SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
         SDL_RenderClear(renderer);
         
-        if (imageTexture) {
-            // Get texture dimensions
-            int texW, texH;
-            SDL_QueryTexture(imageTexture, nullptr, nullptr, &texW, &texH);
-            
-            if (i == 0) { // Debug output on first frame only
-                std::cout << "Display: " << displayMode.w << "x" << displayMode.h << std::endl;
-                std::cout << "Texture: " << texW << "x" << texH << std::endl;
+        // Render all tiles
+        for (int t = 0; t < tileCount; t++) {
+            if (tiles[t]) {
+                SDL_RenderCopy(renderer, tiles[t], nullptr, &tileRects[t]);
             }
-            
-            // Scale to fit display while maintaining aspect ratio
-            float scaleX = (float)displayMode.w / texW;
-            float scaleY = (float)displayMode.h / texH;
-            float scale = (scaleX < scaleY) ? scaleX : scaleY;
-            
-            int newW = (int)(texW * scale);
-            int newH = (int)(texH * scale);
-            
-            if (i == 0) {
-                std::cout << "Scale: " << scale << ", Final: " << newW << "x" << newH << std::endl;
-            }
-            
-            // Center on screen
-            SDL_Rect destRect = {
-                (displayMode.w - newW) / 2,
-                (displayMode.h - newH) / 2,
-                newW, newH
-            };
-            
-            SDL_RenderCopy(renderer, imageTexture, nullptr, &destRect);
         }
         
         SDL_RenderPresent(renderer);
@@ -115,7 +128,9 @@ int main() {
     }
 
     std::cout << "Cleaning up..." << std::endl;
-    if (imageTexture) SDL_DestroyTexture(imageTexture);
+    for (int i = 0; i < tileCount; i++) {
+        if (tiles[i]) SDL_DestroyTexture(tiles[i]);
+    }
     SDL_DestroyRenderer(renderer);
     // Skip window destruction
     IMG_Quit();
