@@ -68,39 +68,25 @@ int main() {
     const Uint32 fadeDuration = 2000;
     const Uint32 displayTime = 5000;
 
-    int frameCount = 0;
     while (SDL_GetTicks() - startTime < displayTime) {
-        std::cout << "Frame " << frameCount << std::endl;
-        
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT || event.type == SDL_KEYDOWN) {
                 goto cleanup;
             }
         }
-        std::cout << "Events processed" << std::endl;
 
         Uint32 elapsed = SDL_GetTicks() - startTime;
         Uint8 alpha = (elapsed >= fadeDuration) ? 255 : (255 * elapsed) / fadeDuration;
-        std::cout << "Alpha: " << (int)alpha << std::endl;
 
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
-        std::cout << "Cleared" << std::endl;
         
         SDL_SetTextureAlphaMod(imageTexture, alpha);
-        std::cout << "Alpha set" << std::endl;
-        
         SDL_RenderCopy(renderer, imageTexture, nullptr, nullptr);
-        std::cout << "Copied" << std::endl;
         
         SDL_RenderPresent(renderer);
-        std::cout << "Presented" << std::endl;
-        
         SDL_Delay(16);
-        frameCount++;
-        
-        if (frameCount >= 2) break; // Exit after 2 frames for debug
     }
 
 cleanup:
