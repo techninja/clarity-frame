@@ -99,8 +99,8 @@ int main() {
     int tilesX = (newW + tileSize - 1) / tileSize;
     int tilesY = (newH + tileSize - 1) / tileSize;
     
-    SDL_Texture* tiles[4] = {nullptr}; // Support up to 2x2 tiles
-    SDL_Rect tileRects[4];
+    SDL_Texture* tiles[4] = {nullptr, nullptr, nullptr, nullptr};
+    SDL_Rect tileRects[4] = {{0,0,0,0}, {0,0,0,0}, {0,0,0,0}, {0,0,0,0}};
     int tileCount = 0;
     
     for (int ty = 0; ty < tilesY && tileCount < 4; ty++) {
@@ -171,9 +171,9 @@ int main() {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
         SDL_RenderClear(renderer);
 
-        // Render tiles
-        for (int i = 0; i < tileCount; i++) {
-            if (tiles[i]) {
+        // Render tiles with bounds checking
+        for (int i = 0; i < tileCount && i < 4; i++) {
+            if (tiles[i] && tileRects[i].w > 0 && tileRects[i].h > 0) {
                 SDL_SetTextureAlphaMod(tiles[i], alpha);
                 SDL_RenderCopy(renderer, tiles[i], nullptr, &tileRects[i]);
             }
