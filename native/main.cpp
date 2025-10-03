@@ -149,6 +149,8 @@ int main() {
     int frameCount = 0;
 
     while (running) {
+        std::cout << "Frame start..." << std::endl;
+        
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 running = false;
@@ -160,31 +162,58 @@ int main() {
                 }
             }
         }
+        std::cout << "Events processed..." << std::endl;
 
         Uint32 currentTime = SDL_GetTicks();
         Uint32 elapsed = currentTime - startTime;
         
         // Calculate fade alpha (0-255)
         Uint8 alpha = (elapsed >= fadeDuration) ? 255 : (255 * elapsed) / fadeDuration;
+        std::cout << "Alpha calculated: " << (int)alpha << std::endl;
 
         // Clear to black
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
+        if (SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255) != 0) {
+            std::cerr << "SetRenderDrawColor failed: " << SDL_GetError() << std::endl;
+            break;
+        }
+        std::cout << "Draw color set..." << std::endl;
+        
+        if (SDL_RenderClear(renderer) != 0) {
+            std::cerr << "RenderClear failed: " << SDL_GetError() << std::endl;
+            break;
+        }
+        std::cout << "Screen cleared..." << std::endl;
 
         // Render all tiles
         for (int i = 0; i < tileCount; i++) {
+            std::cout << "Rendering tile " << i << "..." << std::endl;
             if (tiles[i]) {
-                SDL_SetTextureAlphaMod(tiles[i], alpha);
-                SDL_RenderCopy(renderer, tiles[i], nullptr, &tileRects[i]);
+                if (SDL_SetTextureAlphaMod(tiles[i], alpha) != 0) {
+                    std::cerr << "SetTextureAlphaMod failed: " << SDL_GetError() << std::endl;
+                    continue;
+                }
+                std::cout << "Alpha set for tile " << i << "..." << std::endl;
+                
+                if (SDL_RenderCopy(renderer, tiles[i], nullptr, &tileRects[i]) != 0) {
+                    std::cerr << "RenderCopy failed: " << SDL_GetError() << std::endl;
+                    continue;
+                }
+                std::cout << "Tile " << i << " rendered..." << std::endl;
             }
         }
 
+        std::cout << "About to present..." << std::endl;
         SDL_RenderPresent(renderer);
+        std::cout << "Frame presented!" << std::endl;
+        
         frameCount++;
-        if (frameCount % 60 == 0) {
-            std::cout << "Frame " << frameCount << ", alpha: " << (int)alpha << std::endl;
-        }
         SDL_Delay(16); // ~60 FPS
+        
+        // Exit after first frame for debugging
+        if (frameCount >= 1) {
+            std::cout << "Exiting after first frame for debug" << std::endl;
+            running = false;
+        }
     }
     
     std::cout << "Exiting render loop..." << std::endl;
