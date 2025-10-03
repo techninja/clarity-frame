@@ -20,7 +20,7 @@ int main() {
     
     SDL_Window* window = SDL_CreateWindow("Test", 
         0, 0, displayMode.w, displayMode.h, 
-        SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS);
+        SDL_WINDOW_SHOWN | SDL_WINDOW_BORDERLESS | SDL_WINDOW_ALWAYS_ON_TOP);
     
     if (!window) {
         std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
