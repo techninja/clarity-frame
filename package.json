@@ -16,6 +16,7 @@
     "native:build": "cd native && cmake . && make",
     "native:run": "cd native && ./clarity-frame",
     "native:windowed": "cd native && ./clarity-frame --windowed",
+    "native:framebuffer": "cd native && sudo ./framebuffer",
     "native:install": "sudo apt-get update && sudo apt-get install -y libsdl2-dev libsdl2-image-dev cmake build-essential",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

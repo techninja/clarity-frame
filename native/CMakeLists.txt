@@ -9,6 +9,7 @@ pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image)
 
 add_executable(clarity-frame main.cpp)
 add_executable(simple-test simple_test.cpp)
+add_executable(framebuffer framebuffer.cpp)
 
 target_link_libraries(clarity-frame ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
 target_include_directories(clarity-frame PRIVATE ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS})
@@ -17,3 +18,7 @@ target_compile_options(clarity-frame PRIVATE ${SDL2_CFLAGS_OTHER} ${SDL2_IMAGE_C
 target_link_libraries(simple-test ${SDL2_LIBRARIES})
 target_include_directories(simple-test PRIVATE ${SDL2_INCLUDE_DIRS})
 target_compile_options(simple-test PRIVATE ${SDL2_CFLAGS_OTHER})
+
+target_link_libraries(framebuffer ${SDL2_LIBRARIES} ${SDL2_IMAGE_LIBRARIES})
+target_include_directories(framebuffer PRIVATE ${SDL2_INCLUDE_DIRS} ${SDL2_IMAGE_INCLUDE_DIRS})
+target_compile_options(framebuffer PRIVATE ${SDL2_CFLAGS_OTHER} ${SDL2_IMAGE_CFLAGS_OTHER})

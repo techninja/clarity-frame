@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
     signal(SIGSEGV, segfault_handler);
     std::cout << "Starting Clarity Frame..." << std::endl;
     
-    bool windowed = (argc > 1 && std::string(argv[1]) == "--windowed");
+    bool windowed = true; // Force windowed mode - fullscreen causes segfaults
     
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cerr << "SDL init failed: " << SDL_GetError() << std::endl;
@@ -36,22 +36,13 @@ int main(int argc, char* argv[]) {
     }
     std::cout << "Display: " << displayMode.w << "x" << displayMode.h << std::endl;
 
-    SDL_Window* window;
-    int windowW, windowH;
+    // Use display resolution in windowed mode
+    int windowW = displayMode.w;
+    int windowH = displayMode.h;
     
-    if (windowed) {
-        windowW = 800;
-        windowH = 600;
-        window = SDL_CreateWindow("Clarity Frame",
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-            windowW, windowH, SDL_WINDOW_SHOWN);
-    } else {
-        windowW = displayMode.w;
-        windowH = displayMode.h;
-        window = SDL_CreateWindow("Clarity Frame",
-            SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-            windowW, windowH, SDL_WINDOW_FULLSCREEN_DESKTOP);
-    }
+    SDL_Window* window = SDL_CreateWindow("Clarity Frame",
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        windowW, windowH, SDL_WINDOW_SHOWN);
     
     if (!window) {
         std::cerr << "Window creation failed: " << SDL_GetError() << std::endl;
