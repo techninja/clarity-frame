@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genetic Mutation Lookup Tool</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+
+    .card {
+      background-color: white;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      padding: 1.5rem;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      background-color: #e5e7eb;
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 1rem;
+      background-color: #3b82f6;
+      border-radius: 9999px;
+      transition: width 0.3s ease-in-out;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
+
+  <main class="w-full max-w-2xl mx-auto space-y-6">
+    <header class="text-center">
+      <h1 class="text-3xl font-bold text-gray-900">Genetic Mutation Lookup Tool</h1>
+      <p class="mt-2 text-gray-600">Upload a TAB-separated file to create a local, searchable database.</p>
+      <button id="clear-db-button"
+        class="hidden mt-4 text-sm text-red-600 hover:text-red-800 underline focus:outline-none">Clear Stored Data &
+        Start Over</button>
+    </header>
+
+    <!-- Step 1: File Upload -->
+    <div id="upload-card" class="card">
+      <h2 class="text-xl font-semibold mb-4">1. Import Data File</h2>
+      <div class="flex items-center space-x-4">
+        <input type="file" id="file-input" class="block w-full text-sm text-gray-500
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-full file:border-0
+                    file:text-sm file:font-semibold
+                    file:bg-blue-50 file:text-blue-700
+                    hover:file:bg-blue-100
+                " />
+      </div>
+      <div id="db-status" class="mt-4 text-sm text-gray-500">
+        Status: Database is initializing...
+      </div>
+    </div>
+
+    <!-- Step 2: Import Progress -->
+    <div id="progress-card" class="card hidden">
+      <h2 class="text-xl font-semibold mb-4">Importing Data...</h2>
+      <div class="progress-bar-container">
+        <div id="progress-bar" class="progress-bar" style="width: 0%;"></div>
+      </div>
+      <p id="progress-text" class="mt-2 text-center text-sm text-gray-600">Starting import...</p>
+    </div>
+
+    <!-- Step 3: Data Lookup -->
+    <div id="lookup-card" class="card opacity-50 pointer-events-none">
+      <h2 class="text-xl font-semibold mb-4">2. Lookup SNP by rsID</h2>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <input type="text" id="search-input" placeholder="e.g., rs123456"
+          class="flex-grow w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+        <button id="search-button"
+          class="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+          Search
+        </button>
+      </div>
+      <div id="results-container" class="mt-6">
+        <!-- Search results will be displayed here -->
+      </div>
+    </div>
+
+    <!-- Step 4: Keyword Search -->
+    <div id="keyword-search-card" class="card opacity-50 pointer-events-none">
+      <h2 class="text-xl font-semibold mb-4">3. Search by Keyword</h2>
+      <p class="text-sm text-gray-600 mb-4">Find SNPs in your data associated with a condition or trait (e.g., "heart
+        disease"). This uses the public NHGRI-EBI GWAS Catalog.</p>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <input type="text" id="keyword-search-input" placeholder="e.g., breast cancer"
+          class="flex-grow w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+        <button id="keyword-search-button"
+          class="w-full sm:w-auto bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+          Search Keyword
+        </button>
+      </div>
+      <div id="keyword-results-container" class="mt-6">
+        <!-- Keyword search results will be displayed here -->
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // --- DOM Element References ---
+    const fileInput = document.getElementById('file-input');
+    const dbStatusEl = document.getElementById('db-status');
+    const uploadCard = document.getElementById('upload-card');
+    const progressCard = document.getElementById('progress-card');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const lookupCard = document.getElementById('lookup-card');
+    const searchInput = document.getElementById('search-input');
+    const searchButton = document.getElementById('search-button');
+    const resultsContainer = document.getElementById('results-container');
+    const keywordSearchCard = document.getElementById('keyword-search-card');
+    const keywordSearchInput = document.getElementById('keyword-search-input');
+    const keywordSearchButton = document.getElementById('keyword-search-button');
+    const keywordResultsContainer = document.getElementById('keyword-results-container');
+    const clearDbButton = document.getElementById('clear-db-button');
+
+
+    let db;
+
+    // --- IndexedDB Initialization ---
+    function initDB() {
+      const request = indexedDB.open('GeneticsDB', 1);
+
+      request.onerror = (event) => {
+        console.error("Database error:", event.target.error);
+        dbStatusEl.textContent = "Error: Could not open database.";
+        dbStatusEl.classList.add('text-red-500');
+      };
+
+      request.onsuccess = (event) => {
+        db = event.target.result;
+        console.log("Database opened successfully.");
+        checkDBStatus(); // Check if data already exists
+      };
+
+      // This event is only fired when the database is created or version is changed
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        // Create an objectStore to hold information about our SNPs. We use "rsid" as the key path.
+        const objectStore = db.createObjectStore("snps", { keyPath: "rsid" });
+
+        // Create indexes to search by other fields if needed in the future
+        objectStore.createIndex("chromosome", "chromosome", { unique: false });
+        objectStore.createIndex("position", "position", { unique: false });
+        console.log("Object store and indexes created.");
+      };
+    }
+
+    // --- Database & App State Functions ---
+    function checkDBStatus() {
+      if (!db) return;
+      try {
+        const transaction = db.transaction(['snps'], 'readonly');
+        const store = transaction.objectStore('snps');
+        const countRequest = store.count();
+
+        countRequest.onsuccess = () => {
+          const count = countRequest.result;
+          if (count > 0) {
+            dbStatusEl.textContent = `Status: Loaded ${count.toLocaleString()} records from cache.`;
+            dbStatusEl.classList.add('text-green-600');
+            activateApp();
+          } else {
+            dbStatusEl.textContent = "Status: Database is empty. Please select a file.";
+            dbStatusEl.classList.add('text-green-600');
+          }
+        };
+        countRequest.onerror = (event) => {
+          console.error("Error counting records:", event.target.error);
+          dbStatusEl.textContent = "Error: Could not check database status.";
+        }
+      } catch (e) {
+        console.error("Error accessing object store. It might not exist yet:", e);
+        dbStatusEl.textContent = "Status: Database ready. Please select a file.";
+      }
+    }
+
+    function activateApp() {
+      uploadCard.classList.add('hidden');
+      progressCard.classList.add('hidden');
+      lookupCard.classList.remove('opacity-50', 'pointer-events-none');
+      keywordSearchCard.classList.remove('opacity-50', 'pointer-events-none');
+      clearDbButton.classList.remove('hidden');
+      resultsContainer.innerHTML = '';
+    }
+
+    function clearDatabase() {
+      if (!db) return;
+      const transaction = db.transaction(['snps'], 'readwrite');
+      const store = transaction.objectStore('snps');
+      const request = store.clear();
+
+      request.onsuccess = () => {
+        console.log("Database cleared.");
+        // Reloading the page is the simplest way to reset the UI state.
+        window.location.reload();
+      };
+      request.onerror = (event) => {
+        console.error("Error clearing database:", event.target.error);
+        keywordResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">Error clearing the database.</div>`;
+      };
+    }
+
+
+    // --- File Handling and Processing ---
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      uploadCard.classList.add('hidden');
+      progressCard.classList.remove('hidden');
+
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        processData(e.target.result);
+      };
+
+      reader.onerror = (e) => {
+        progressText.textContent = "Error reading file.";
+        console.error("FileReader error:", e);
+      };
+
+      reader.readAsText(file);
+    }
+
+    function processData(fileContents) {
+      const lines = fileContents.split('\n');
+      const dataLines = lines.filter(line => line.trim() && !line.startsWith('#') && !line.startsWith('rsid'));
+      const totalLines = dataLines.length;
+      let processedCount = 0;
+      const batchSize = 5000; // Process 5000 records per transaction for performance
+
+      function processChunk(startIndex) {
+        if (startIndex >= totalLines) {
+          handleImportComplete(totalLines);
+          return;
+        }
+
+        const transaction = db.transaction(['snps'], 'readwrite');
+        const store = transaction.objectStore('snps');
+
+        const endIndex = Math.min(startIndex + batchSize, totalLines);
+
+        for (let i = startIndex; i < endIndex; i++) {
+          const columns = dataLines[i].split('\t');
+          if (columns.length === 5) {
+            const snpRecord = {
+              rsid: columns[0].trim(),
+              chromosome: columns[1].trim(),
+              position: parseInt(columns[2], 10),
+              allele1: columns[3].trim(),
+              allele2: columns[4].trim()
+            };
+            store.put(snpRecord);
+          }
+        }
+
+        transaction.oncomplete = () => {
+          processedCount = endIndex;
+          updateProgress(processedCount, totalLines);
+          // Process next chunk asynchronously to prevent UI freeze
+          setTimeout(() => processChunk(endIndex), 0);
+        };
+
+        transaction.onerror = (event) => {
+          console.error("Transaction error:", event.target.error);
+          progressText.textContent = `Error during import at record ${startIndex}.`;
+        };
+      }
+
+      // Start the import process
+      processChunk(0);
+    }
+
+    // --- UI Update Functions ---
+    function updateProgress(current, total) {
+      const percentage = total > 0 ? (current / total) * 100 : 0;
+      progressBar.style.width = `${percentage}%`;
+      progressText.textContent = `Processed ${current.toLocaleString()} / ${total.toLocaleString()} records...`;
+    }
+
+    function handleImportComplete(totalRecords) {
+      activateApp();
+      // Show a summary message in the main results area
+      resultsContainer.innerHTML = `
+                <div class="p-4 bg-green-100 border border-green-200 text-green-800 rounded-lg">
+                    <p class="font-semibold">Import Complete!</p>
+                    <p>${totalRecords.toLocaleString()} records were successfully imported into the local database.</p>
+                </div>
+            `;
+    }
+
+    // --- Data Lookup ---
+    function searchRSID() {
+      const rsidQuery = searchInput.value.trim();
+      if (!rsidQuery || !db) {
+        resultsContainer.innerHTML = `<p class="text-red-500">Please enter an rsID to search.</p>`;
+        return;
+      }
+
+      const transaction = db.transaction(['snps'], 'readonly');
+      const store = transaction.objectStore('snps');
+      const request = store.get(rsidQuery);
+
+      request.onsuccess = () => {
+        const result = request.result;
+        displayResult(result);
+      };
+
+      request.onerror = (event) => {
+        console.error("Lookup error:", event.target.error);
+        displayResult(null, "An error occurred during lookup.");
+      };
+    }
+
+    function displayResult(data, errorMsg = '') {
+      if (errorMsg) {
+        resultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">${errorMsg}</div>`;
+      } else if (data) {
+        resultsContainer.innerHTML = `
+                    <div class="p-5 bg-gray-50 border border-gray-200 rounded-lg">
+                        <h3 class="text-lg font-bold text-blue-700">${data.rsid}</h3>
+                        <div class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                            <strong class="text-gray-600">Chromosome:</strong>
+                            <span>${data.chromosome}</span>
+                            <strong class="text-gray-600">Position:</strong>
+                            <span>${data.position.toLocaleString()}</span>
+                            <strong class="text-gray-600">Allele 1:</strong>
+                            <span class="font-mono bg-gray-200 px-2 py-1 rounded">${data.allele1}</span>
+                            <strong class="text-gray-600">Allele 2:</strong>
+                            <span class="font-mono bg-gray-200 px-2 py-1 rounded">${data.allele2}</span>
+                        </div>
+                    </div>
+                `;
+      } else {
+        resultsContainer.innerHTML = `
+                    <div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">
+                        <p><strong class="font-semibold">Not Found:</strong> No record found for the provided rsID.</p>
+                    </div>
+                `;
+      }
+    }
+
+    // --- Keyword Search ---
+    async function searchByKeyword() {
+      const keyword = keywordSearchInput.value.trim();
+      if (!keyword) {
+        keywordResultsContainer.innerHTML = `<p class="text-red-500">Please enter a keyword to search.</p>`;
+        return;
+      }
+
+      keywordResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Searching for traits related to "${keyword}"...</div>`;
+
+      try {
+        // Step 1: Find the EFO (Experimental Factor Ontology) trait for the given keyword.
+        const traitResponse = await fetch(`https://www.ebi.ac.uk/gwas/rest/api/efoTraits/search/findByEfoTrait?trait=${encodeURIComponent(keyword)}`);
+        if (!traitResponse.ok) {
+          if (traitResponse.status === 404) {
+            throw new Error(`API endpoint for traits not found. The service may be unavailable or the URL has changed.`);
+          }
+          throw new Error(`API Error (Traits): ${traitResponse.status} ${traitResponse.statusText}`);
+        }
+        const traitData = await traitResponse.json();
+        const efoTraits = traitData._embedded?.efoTraits;
+
+        if (!efoTraits || efoTraits.length === 0) {
+          keywordResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No genetic traits found for "${keyword}".</div>`;
+          return;
+        }
+
+        keywordResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${efoTraits.length} related trait(s). Fetching associated SNPs...</div>`;
+
+        // Step 2: For each trait, fetch its associations and map rsIDs to traits and risk alleles.
+        const rsidInfoMap = new Map();
+        const fetchErrors = [];
+        let totalAssociationsFound = 0;
+
+        for (const trait of efoTraits) {
+          const assocUrl = trait._links?.associations?.href;
+          if (!assocUrl) continue;
+
+          try {
+            let associationsForThisTrait = [];
+            let nextUrl = assocUrl;
+
+            while (nextUrl) {
+              const assocResponse = await fetch(nextUrl);
+              if (!assocResponse.ok) {
+                if (assocResponse.status !== 404) {
+                  fetchErrors.push(`Failed for ${trait.trait}: ${assocResponse.statusText}`);
+                }
+                break;
+              }
+              const assocData = await assocResponse.json();
+              if (assocData._embedded?.associations) {
+                associationsForThisTrait.push(...assocData._embedded.associations);
+              }
+              nextUrl = assocData._links?.next?.href;
+            }
+
+            totalAssociationsFound += associationsForThisTrait.length;
+
+            associationsForThisTrait.forEach(assoc => {
+              const specificTrait = trait.trait; // Use broad trait initially
+              const studyUrl = assoc._links?.study?.href;
+
+              const assocInfo = {
+                riskAlleles: new Set(),
+                rsids: new Set()
+              };
+
+              if (assoc.snps) {
+                assoc.snps.forEach(snp => {
+                  if (snp.rsId) {
+                    const cleanRsId = snp.rsId.split(' ')[0].trim();
+                    if (cleanRsId) assocInfo.rsids.add(cleanRsId);
+                  }
+                });
+              }
+              assoc.loci?.forEach(locus => {
+                locus.strongestRiskAlleles?.forEach(riskAllele => {
+                  if (riskAllele.riskAlleleName) {
+                    const [rsIdPart, allelePart] = riskAllele.riskAlleleName.split('-');
+                    const cleanRsId = rsIdPart.trim();
+                    if (cleanRsId.startsWith('rs')) {
+                      assocInfo.rsids.add(cleanRsId);
+                      if (allelePart && allelePart.trim() !== '?') {
+                        assocInfo.riskAlleles.add(allelePart.trim());
+                      }
+                    }
+                  }
+                })
+              });
+
+              assocInfo.rsids.forEach(rsid => {
+                if (!rsidInfoMap.has(rsid)) {
+                  rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set() });
+                }
+                const info = rsidInfoMap.get(rsid);
+                info.traits.add(specificTrait);
+                if (studyUrl) info.studyUrls.add(studyUrl);
+                assocInfo.riskAlleles.forEach(ra => info.riskAlleles.add(ra));
+              });
+            });
+
+          } catch (err) {
+            fetchErrors.push(`Network error for trait ${trait.trait}: ${err.message}`);
+          }
+        }
+
+        if (totalAssociationsFound === 0) {
+          if (fetchErrors.length > 0) {
+            keywordResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg"><strong class="font-semibold">API Error:</strong> Could not retrieve some genetic associations. The service may be temporarily unavailable. Errors: ${fetchErrors.join(', ')}</div>`;
+          } else {
+            keywordResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">While traits for "${keyword}" were found, there are no specific genetic associations listed for them in the GWAS Catalog.</div>`;
+          }
+          return;
+        }
+
+        const allAssociatedRsids = Array.from(rsidInfoMap.keys());
+
+        if (allAssociatedRsids.length === 0) {
+          keywordResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No specific SNPs found for traits related to "${keyword}".</div>`;
+          return;
+        }
+
+        keywordResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${allAssociatedRsids.length} unique associated SNPs. Checking against your data...</div>`;
+
+        const matchedSnps = await findRsidsInDB(allAssociatedRsids);
+        displayKeywordResults(keyword, matchedSnps, allAssociatedRsids, rsidInfoMap);
+
+      } catch (error) {
+        console.error("Keyword search error:", error);
+        keywordResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">An error occurred: ${error.message}</div>`;
+      }
+    }
+
+    function findRsidsInDB(rsids) {
+      return new Promise((resolve, reject) => {
+        if (!db) return reject("Database not available.");
+
+        const transaction = db.transaction(['snps'], 'readonly');
+        const store = transaction.objectStore('snps');
+        const matched = [];
+        let checkedCount = 0;
+
+        if (rsids.length === 0) {
+          resolve([]);
+          return;
+        }
+
+        rsids.forEach(rsid => {
+          const request = store.get(rsid);
+          request.onsuccess = () => {
+            if (request.result) {
+              matched.push(request.result);
+            }
+            checkedCount++;
+            if (checkedCount === rsids.length) {
+              resolve(matched);
+            }
+          };
+          request.onerror = () => {
+            // Log error but continue
+            console.error(`Error fetching rsid ${rsid} from DB.`);
+            checkedCount++;
+            if (checkedCount === rsids.length) {
+              resolve(matched);
+            }
+          };
+        });
+      });
+    }
+
+    function displayKeywordResults(keyword, matchedSnps, allAssociatedRsids, rsidInfoMap) {
+      const totalAssociated = allAssociatedRsids.length;
+      if (totalAssociated === 0) {
+        keywordResultsContainer.innerHTML = `
+                    <div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">
+                        <p><strong class="font-semibold">No Results:</strong> No known SNP associations could be found for "${keyword}".</p>
+                    </div>
+                `;
+        return;
+      }
+
+      const matchedRsidMap = new Map(matchedSnps.map(snp => [snp.rsid, snp]));
+
+      let html = `
+                <div class="p-5 bg-gray-50 border border-gray-200 rounded-lg">
+                    <h3 class="text-lg font-bold text-gray-800">Results for "${keyword}"</h3>
+                    <p class="text-sm text-gray-600 mt-1">
+                        Found <strong>${totalAssociated.toLocaleString()}</strong> known SNP(s) associated with this trait.
+                        <span class="font-semibold ${matchedSnps.length > 0 ? 'text-green-700' : 'text-gray-700'}">
+                            ${matchedSnps.length.toLocaleString()}
+                        </span> ${matchedSnps.length === 1 ? 'match was' : 'matches were'} found in your data.
+                    </p>
+                     <div class="mt-3 text-xs text-gray-500 p-2 bg-gray-100 rounded-md">
+                        <strong>Disclaimer:</strong> This is a tool for informational purposes only and is not medical advice. "Risk" is a statistical measure and does not mean you will or will not develop a condition. Consult a healthcare professional for any health concerns.
+                    </div>
+                    <div id="results-scroll-container" class="mt-4 space-y-2 max-h-96 overflow-y-auto pr-2 border-t pt-3">
+            `;
+
+      const riskIconSVG = {
+        lower: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`,
+        moderate: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.636-1.214 2.27-1.214 2.906 0l4.318 8.216c.36.685.163 1.543-.44 1.998a1.5 1.5 0 01-2.228-.718L11.5 10.428V14a1.5 1.5 0 01-3 0v-3.572l-1.313 2.175a1.5 1.5 0 01-2.228.718c-.603-.455-.8-1.313-.44-1.998l4.318-8.216z" clip-rule="evenodd" /></svg>`,
+        higher: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>`
+      };
+
+      allAssociatedRsids.sort().forEach(rsid => {
+        const info = rsidInfoMap.get(rsid);
+        const traitsString = info && info.traits ? Array.from(info.traits).slice(0, 3).join(', ') : 'Unknown trait';
+        const studyUrls = info && info.studyUrls ? JSON.stringify(Array.from(info.studyUrls)) : '[]';
+        const riskAlleles = info ? info.riskAlleles : new Set();
+        const riskAlleleString = riskAlleles.size > 0 ? Array.from(riskAlleles).join(', ') : 'N/A';
+
+        if (matchedRsidMap.has(rsid)) {
+          const snp = matchedRsidMap.get(rsid);
+
+          let riskCount = 0;
+          if (riskAlleles.size > 0) {
+            if (riskAlleles.has(snp.allele1)) riskCount++;
+            if (riskAlleles.has(snp.allele2)) riskCount++;
+          }
+
+          let riskLevel, riskColor, riskBg, riskBorder;
+          if (riskAlleles.size === 0) {
+            riskLevel = 'Unknown';
+            riskColor = 'text-gray-700';
+            riskBg = 'bg-gray-50';
+            riskBorder = 'border-gray-200';
+          } else if (riskCount === 2) {
+            riskLevel = 'Higher Risk';
+            riskColor = 'text-red-800';
+            riskBg = 'bg-red-50';
+            riskBorder = 'border-red-200';
+          } else if (riskCount === 1) {
+            riskLevel = 'Moderate Risk';
+            riskColor = 'text-yellow-800';
+            riskBg = 'bg-yellow-50';
+            riskBorder = 'border-yellow-200';
+          } else {
+            riskLevel = 'Lower Risk';
+            riskColor = 'text-green-800';
+            riskBg = 'bg-green-50';
+            riskBorder = 'border-green-200';
+          }
+
+          const icon = riskLevel === 'Higher Risk' ? riskIconSVG.higher : (riskLevel === 'Moderate Risk' ? riskIconSVG.moderate : riskIconSVG.lower);
+
+          html += `
+                        <div class="${riskBg} ${riskBorder} border p-3 rounded-md shadow-sm needs-study-load" data-study-urls='${studyUrls}'>
+                            <details open>
+                                <summary class="font-semibold cursor-pointer ${riskColor} flex justify-between items-center">
+                                    <span>${snp.rsid}</span>
+                                    <span class="text-xs font-bold ${riskBg.replace('50', '200')} ${riskColor} px-2 py-1 rounded-full">MATCH FOUND</span>
+                                </summary>
+                                <div class="mt-3 pt-3 border-t grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-700">
+                                    <strong class="text-gray-600">Associated Trait(s):</strong>
+                                    <span class="trait-display">${traitsString}</span>
+                                    <strong class="text-gray-600">Risk Allele(s):</strong>
+                                    <span class="font-mono bg-gray-200 px-1 rounded">${riskAlleleString}</span>
+                                    <strong class="text-gray-600">Your Alleles:</strong>
+                                    <span class="font-mono bg-gray-200 px-1 rounded">${snp.allele1} / ${snp.allele2}</span>
+                                    <strong class="text-gray-600">Risk Level:</strong>
+                                    <span class="font-semibold ${riskColor}">${riskLevel !== 'Unknown' ? icon : ''} ${riskLevel}</span>
+                                    <strong class="text-gray-600">More Info:</strong>
+                                    <span><a href="https://www.ncbi.nlm.nih.gov/snp/${snp.rsid}" target="_blank" class="text-blue-500 hover:underline">dbSNP</a></span>
+                               </div>
+                            </details>
+                        </div>
+                    `;
+        } else {
+          html += `
+                        <div class="bg-white border p-3 rounded-md needs-study-load" data-study-urls='${studyUrls}'>
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <a href="https://www.ncbi.nlm.nih.gov/snp/${rsid}" target="_blank" class="text-gray-700 hover:underline text-sm font-medium">${rsid}</a>
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        <span class="font-semibold">Trait(s):</span> <span class="trait-display">${traitsString}</span> | <span class="font-semibold">Risk Allele(s):</span> ${riskAlleleString}
+                                    </p>
+                                </div>
+                                <span class="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded-full">Not in your data</span>
+                            </div>
+                        </div>
+                    `;
+        }
+      });
+
+      html += `</div></div>`;
+      keywordResultsContainer.innerHTML = html;
+      setupLazyLoadObserver();
+    }
+
+    function setupLazyLoadObserver() {
+      const targets = document.querySelectorAll('.needs-study-load');
+      if (!targets.length) return;
+
+      const scrollContainer = document.getElementById('results-scroll-container');
+      if (!scrollContainer) return;
+
+      const lazyLoadCallback = async (entries, observer) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const target = entry.target;
+            const traitDisplay = target.querySelector('.trait-display');
+
+            observer.unobserve(target);
+
+            const studyUrls = JSON.parse(target.dataset.studyUrls || '[]');
+            if (studyUrls.length === 0 || !traitDisplay) {
+              continue;
+            }
+
+            if (!traitDisplay.dataset.loading) {
+              traitDisplay.dataset.loading = 'true';
+              const originalText = traitDisplay.textContent;
+              traitDisplay.innerHTML = `<i>Loading details...</i>`;
+
+              try {
+                const studyPromises = studyUrls.map(url =>
+                  fetch(url).then(res => res.ok ? res.json() : null).catch(() => null)
+                );
+                const studyResults = await Promise.all(studyPromises);
+
+                const specificTraits = new Set();
+                studyResults.forEach(studyData => {
+                  if (studyData?.diseaseTrait?.trait) {
+                    specificTraits.add(studyData.diseaseTrait.trait);
+                  }
+                });
+
+                if (specificTraits.size > 0) {
+                  traitDisplay.textContent = Array.from(specificTraits).join(', ');
+                } else {
+                  traitDisplay.textContent = originalText;
+                }
+              } catch (e) {
+                console.error("Failed to lazy load study details", e);
+                traitDisplay.textContent = originalText;
+              } finally {
+                delete traitDisplay.dataset.loading;
+              }
+            }
+          }
+        }
+      };
+
+      const observer = new IntersectionObserver(lazyLoadCallback, {
+        root: scrollContainer,
+        rootMargin: '200px',
+        threshold: 0.01
+      });
+
+      targets.forEach(target => observer.observe(target));
+    }
+
+    // --- Event Listeners ---
+    fileInput.addEventListener('change', handleFileSelect);
+    searchButton.addEventListener('click', searchRSID);
+    searchInput.addEventListener('keyup', (event) => {
+      if (event.key === 'Enter') {
+        searchRSID();
+      }
+    });
+    keywordSearchButton.addEventListener('click', searchByKeyword);
+    keywordSearchInput.addEventListener('keyup', (event) => {
+      if (event.key === 'Enter') {
+        searchByKeyword();
+      }
+    });
+    clearDbButton.addEventListener('click', clearDatabase);
+
+
+    // --- Initial Call ---
+    window.onload = () => {
+      initDB();
+    };
+
+  </script>
+</body>
+
+</html>
