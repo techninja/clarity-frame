@@ -1,1139 +1,1192 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Genetic Mutation Lookup Tool</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Include three.js library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* bg-gray-100 */
-        }
-        /* Canvas for 3D background */
-        #dna-canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1; /* Place behind other content */
-            display: block; /* Remove potential extra space */
-        }
-        main {
-            position: relative; /* Ensure main content is above canvas */
-            z-index: 1;
-            /* Make cards slightly transparent to see background */
-            background-color: rgba(255, 255, 255, 0); /* Make main transparent */
-        }
-        .card {
-            background-color: rgba(255, 255, 255, 0.9); /* Slightly transparent cards */
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            padding: 1.5rem;
-            transition: all 0.3s ease-in-out;
-            backdrop-filter: blur(2px); /* Optional: blur background behind cards */
-            -webkit-backdrop-filter: blur(2px); /* Safari support */
-        }
-        .progress-bar-container {
-            width: 100%;
-            background-color: #e5e7eb;
-            border-radius: 9999px;
-            overflow: hidden;
-        }
-        .progress-bar {
-            height: 1rem;
-            background-color: #3b82f6;
-            border-radius: 9999px;
-            transition: width 0.3s ease-in-out;
-        }
-        /* Tab styles */
-        .tab-button {
-            padding: 0.75rem 1.25rem;
-            border-bottom: 2px solid transparent;
-            cursor: pointer;
-            font-weight: 500;
-            color: #6b7280; /* text-gray-500 */
-            white-space: nowrap;
-        }
-        .tab-button.active {
-            border-bottom-color: #3b82f6; /* border-blue-600 */
-            color: #3b82f6; /* text-blue-600 */
-        }
-        .tab-pane.hidden {
-            display: none;
-        }
-        /* Trait button styles */
-        .trait-button {
-            padding: 0.375rem 0.75rem;
-            border-radius: 9999px;
-            /* border: 1px solid #d1d5db; /* border-gray-300 */
-            /* background-color: #f9fafb; /* bg-gray-50 */
-            /* color: #374151; /* text-gray-700 */
-            font-weight: 500;
-            font-size: 0.875rem;
-            cursor: pointer;
-            transition: all 0.15s ease-in-out;
-            white-space: nowrap; /* Prevent buttons wrapping text */
-            border-width: 1px; /* Ensure border always takes up space */
-        }
-        .trait-button:hover {
-            opacity: 0.8;
-            /* background-color: #f3f4f6; /* bg-gray-100 */
-            /* border-color: #9ca3af; /* border-gray-400 */
-        }
-        /* Limit height and enable scroll for traits container */
-        #top-traits-container {
-            max-height: 8.5rem; /* Increased height for ~3.5 lines */
-            overflow-y: auto;
-            padding-right: 0.5rem; /* Add some padding for the scrollbar */
-             border: 1px solid transparent; /* Add border to prevent layout shift with scrollbar */
-        }
-         #trait-loading-indicator {
-             display: flex;
-             justify-content: center;
-             align-items: center;
-             padding: 0.5rem;
-             margin-top: 0.5rem;
-         }
-        .spinner {
-             border: 2px solid rgba(0, 0, 0, 0.1);
-             border-left-color: #3b82f6; /* blue-600 */
-             border-radius: 50%;
-             width: 1rem; /* size-4 */
-             height: 1rem; /* size-4 */
-             animation: spin 1s linear infinite;
-             /* margin-right: 0.5rem; /* mr-2 */ */ Removed margin
-         }
-         @keyframes spin {
-             to { transform: rotate(360deg); }
-         }
-        /* Stacked bar chart styles */
-        .chart-container {
-            display: flex;
-            height: 1.5rem; /* 24px */
-            border-radius: 0.25rem; /* rounded */
-            overflow: hidden;
-            margin-top: 1rem;
-            border: 1px solid #d1d5db; /* border-gray-300 */
-        }
-        .chart-segment {
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.75rem; /* text-xs */
-            font-weight: 500;
-             transition: width 0.5s ease-in-out;
-             position: relative; /* For tooltip */
-             color: white; /* Default text color, adjust if needed */
-        }
-         .chart-segment:hover .tooltip {
-            display: block;
-        }
-        .tooltip {
-            display: none;
-            position: absolute;
-            bottom: 110%; /* Position above the segment */
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: rgba(0, 0, 0, 0.75);
-            color: white;
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.75rem;
-            white-space: nowrap;
-            z-index: 10;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genetic Mutation Lookup Tool</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Include three.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+      /* bg-gray-100 */
+    }
 
-    </style>
+    /* Canvas for 3D background */
+    #dna-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      /* Place behind other content */
+      display: block;
+      /* Remove potential extra space */
+    }
+
+    main {
+      position: relative;
+      /* Ensure main content is above canvas */
+      z-index: 1;
+      /* Make cards slightly transparent to see background */
+      background-color: rgba(255, 255, 255, 0);
+      /* Make main transparent */
+    }
+
+    .card {
+      background-color: rgba(255, 255, 255, 0.9);
+      /* Slightly transparent cards */
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      padding: 1.5rem;
+      transition: all 0.3s ease-in-out;
+      backdrop-filter: blur(2px);
+      /* Optional: blur background behind cards */
+      -webkit-backdrop-filter: blur(2px);
+      /* Safari support */
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      background-color: #e5e7eb;
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 1rem;
+      background-color: #3b82f6;
+      border-radius: 9999px;
+      transition: width 0.3s ease-in-out;
+    }
+
+    /* Tab styles */
+    .tab-button {
+      padding: 0.75rem 1.25rem;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-weight: 500;
+      color: #6b7280;
+      /* text-gray-500 */
+      white-space: nowrap;
+    }
+
+    .tab-button.active {
+      border-bottom-color: #3b82f6;
+      /* border-blue-600 */
+      color: #3b82f6;
+      /* text-blue-600 */
+    }
+
+    .tab-pane.hidden {
+      display: none;
+    }
+
+    /* Trait button styles */
+    .trait-button {
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      /* border: 1px solid #d1d5db; /* border-gray-300 */
+      /* background-color: #f9fafb; /* bg-gray-50 */
+      /* color: #374151; /* text-gray-700 */
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+      white-space: nowrap;
+      /* Prevent buttons wrapping text */
+      border-width: 1px;
+      /* Ensure border always takes up space */
+    }
+
+    .trait-button:hover {
+      opacity: 0.8;
+      /* background-color: #f3f4f6; /* bg-gray-100 */
+      /* border-color: #9ca3af; /* border-gray-400 */
+    }
+
+    /* Limit height and enable scroll for traits container */
+    #top-traits-container {
+      max-height: 8.5rem;
+      /* Increased height for ~3.5 lines */
+      overflow-y: auto;
+      padding-right: 0.5rem;
+      /* Add some padding for the scrollbar */
+      border: 1px solid transparent;
+      /* Add border to prevent layout shift with scrollbar */
+    }
+
+    #trait-loading-indicator {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .spinner {
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      border-left-color: #3b82f6;
+      /* blue-600 */
+      border-radius: 50%;
+      width: 1rem;
+      /* size-4 */
+      height: 1rem;
+      /* size-4 */
+      animation: spin 1s linear infinite;
+      /* margin-right: 0.5rem; /* mr-2 */
+      */ Removed margin
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Stacked bar chart styles */
+    .chart-container {
+      display: flex;
+      height: 1.5rem;
+      /* 24px */
+      border-radius: 0.25rem;
+      /* rounded */
+      overflow: hidden;
+      margin-top: 1rem;
+      border: 1px solid #d1d5db;
+      /* border-gray-300 */
+    }
+
+    .chart-segment {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      /* text-xs */
+      font-weight: 500;
+      transition: width 0.5s ease-in-out;
+      position: relative;
+      /* For tooltip */
+      color: white;
+      /* Default text color, adjust if needed */
+    }
+
+    .chart-segment:hover .tooltip {
+      display: block;
+    }
+
+    .tooltip {
+      display: none;
+      position: absolute;
+      bottom: 110%;
+      /* Position above the segment */
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.75);
+      color: white;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.25rem;
+      font-size: 0.75rem;
+      white-space: nowrap;
+      z-index: 10;
+    }
+  </style>
 </head>
+
 <body class="text-gray-800 flex items-center justify-center min-h-screen p-4">
-    <!-- Canvas for 3D background -->
-    <canvas id="dna-canvas"></canvas>
+  <!-- Canvas for 3D background -->
+  <canvas id="dna-canvas"></canvas>
 
-    <main class="w-full max-w-2xl mx-auto space-y-6">
-        <header class="text-center bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow">
-            <h1 class="text-3xl font-bold text-gray-900">Genetic Mutation Lookup Tool</h1>
-            <p class="mt-2 text-gray-600">Upload a TAB-separated file to create a local, searchable database.</p>
-            <button id="clear-db-button" class="hidden mt-4 text-sm text-red-600 hover:text-red-800 underline focus:outline-none">Clear Stored Data & Start Over</button>
-        </header>
+  <main class="w-full max-w-2xl mx-auto space-y-6">
+    <header class="text-center bg-white/70 backdrop-blur-sm p-4 rounded-lg shadow">
+      <h1 class="text-3xl font-bold text-gray-900">Genetic Mutation Lookup Tool</h1>
+      <p class="mt-2 text-gray-600">Upload a TAB-separated file to create a local, searchable database.</p>
+      <button id="clear-db-button"
+        class="hidden mt-4 text-sm text-red-600 hover:text-red-800 underline focus:outline-none">Clear Stored Data &
+        Start Over</button>
+    </header>
 
-        <!-- Step 1: File Upload -->
-        <div id="upload-card" class="card">
-            <h2 class="text-xl font-semibold mb-4">1. Import Data File</h2>
-            <div class="flex items-center space-x-4">
-                <input type="file" id="file-input" class="block w-full text-sm text-gray-500
+    <!-- Step 1: File Upload -->
+    <div id="upload-card" class="card">
+      <h2 class="text-xl font-semibold mb-4">1. Import Data File</h2>
+      <div class="flex items-center space-x-4">
+        <input type="file" id="file-input" class="block w-full text-sm text-gray-500
                     file:mr-4 file:py-2 file:px-4
                     file:rounded-full file:border-0
                     file:text-sm file:font-semibold
                     file:bg-blue-50 file:text-blue-700
                     hover:file:bg-blue-100
-                "/>
-            </div>
-             <div id="db-status" class="mt-4 text-sm text-gray-500">
-                Status: Database is initializing...
-            </div>
+                " />
+      </div>
+      <div id="db-status" class="mt-4 text-sm text-gray-500">
+        Status: Database is initializing...
+      </div>
+    </div>
+
+    <!-- Step 2: Import Progress -->
+    <div id="progress-card" class="card hidden">
+      <h2 class="text-xl font-semibold mb-4">Importing Data...</h2>
+      <div class="progress-bar-container">
+        <div id="progress-bar" class="progress-bar" style="width: 0%;"></div>
+      </div>
+      <p id="progress-text" class="mt-2 text-center text-sm text-gray-600">Starting import...</p>
+    </div>
+
+    <!-- Step 3: Combined Search -->
+    <div id="search-card" class="card opacity-50 pointer-events-none">
+      <h2 class="text-xl font-semibold mb-4">2. Search Traits or rsIDs</h2>
+      <p class="text-sm text-gray-600 mb-4">Enter a keyword (e.g., "heart disease") to find associated SNPs, or enter a
+        specific rsID (e.g., "rs123456"). Uses the public NHGRI-EBI GWAS Catalog.</p>
+
+      <div class="mb-4">
+        <p class="text-sm font-medium text-gray-700 mb-2">Or select a common trait:</p>
+        <div id="top-traits-container" class="flex flex-wrap gap-2">
+          <p class="text-xs text-gray-500 italic">Loading common traits...</p>
+          <!-- Buttons will be injected here by JS -->
         </div>
-
-        <!-- Step 2: Import Progress -->
-        <div id="progress-card" class="card hidden">
-            <h2 class="text-xl font-semibold mb-4">Importing Data...</h2>
-            <div class="progress-bar-container">
-                <div id="progress-bar" class="progress-bar" style="width: 0%;"></div>
-            </div>
-            <p id="progress-text" class="mt-2 text-center text-sm text-gray-600">Starting import...</p>
+        <!-- Loading indicator for infinite scroll -->
+        <div id="trait-loading-indicator" class="hidden">
+          <div class="spinner"></div>
         </div>
+      </div>
 
-        <!-- Step 3: Combined Search -->
-        <div id="search-card" class="card opacity-50 pointer-events-none">
-            <h2 class="text-xl font-semibold mb-4">2. Search Traits or rsIDs</h2>
-            <p class="text-sm text-gray-600 mb-4">Enter a keyword (e.g., "heart disease") to find associated SNPs, or enter a specific rsID (e.g., "rs123456"). Uses the public NHGRI-EBI GWAS Catalog.</p>
+      <div class="flex flex-col sm:flex-row gap-4">
+        <input type="text" id="main-search-input" placeholder="Enter keyword or rsID"
+          class="flex-grow w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+        <button id="main-search-button"
+          class="w-full sm:w-auto bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+          Search
+        </button>
+      </div>
+      <div id="search-results-container" class="mt-6">
+        <!-- Search results will be displayed here -->
+      </div>
+    </div>
+  </main>
 
-            <div class="mb-4">
-                <p class="text-sm font-medium text-gray-700 mb-2">Or select a common trait:</p>
-                <div id="top-traits-container" class="flex flex-wrap gap-2">
-                    <p class="text-xs text-gray-500 italic">Loading common traits...</p>
-                    <!-- Buttons will be injected here by JS -->
-                </div>
-                 <!-- Loading indicator for infinite scroll -->
-                 <div id="trait-loading-indicator" class="hidden">
-                     <div class="spinner"></div>
-                 </div>
-            </div>
-
-            <div class="flex flex-col sm:flex-row gap-4">
-                <input type="text" id="main-search-input" placeholder="Enter keyword or rsID" class="flex-grow w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                <button id="main-search-button" class="w-full sm:w-auto bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    Search
-                </button>
-            </div>
-            <div id="search-results-container" class="mt-6">
-                <!-- Search results will be displayed here -->
-            </div>
-        </div>
-    </main>
-
-    <script type="module"> // Change script type to module for three.js
-        // --- DOM Element References ---
-        const fileInput = document.getElementById('file-input');
-        const dbStatusEl = document.getElementById('db-status');
-        const uploadCard = document.getElementById('upload-card');
-        const progressCard = document.getElementById('progress-card');
-        const progressBar = document.getElementById('progress-bar');
-        const progressText = document.getElementById('progress-text');
-        // Removed lookupCard elements
-        const searchCard = document.getElementById('search-card'); // Renamed from keyword-search-card
-        const mainSearchInput = document.getElementById('main-search-input'); // Renamed from keyword-search-input
-        const mainSearchButton = document.getElementById('main-search-button'); // Renamed from keyword-search-button
-        const searchResultsContainer = document.getElementById('search-results-container'); // Renamed from keyword-results-container
-        const clearDbButton = document.getElementById('clear-db-button');
-        const topTraitsContainer = document.getElementById('top-traits-container');
-        const traitLoadingIndicator = document.getElementById('trait-loading-indicator');
-        const dnaCanvas = document.getElementById('dna-canvas');
+  <script type="module"> // Change script type to module for three.js
+    // --- DOM Element References ---
+    const fileInput = document.getElementById('file-input');
+    const dbStatusEl = document.getElementById('db-status');
+    const uploadCard = document.getElementById('upload-card');
+    const progressCard = document.getElementById('progress-card');
+    const progressBar = document.getElementById('progress-bar');
+    const progressText = document.getElementById('progress-text');
+    // Removed lookupCard elements
+    const searchCard = document.getElementById('search-card'); // Renamed from keyword-search-card
+    const mainSearchInput = document.getElementById('main-search-input'); // Renamed from keyword-search-input
+    const mainSearchButton = document.getElementById('main-search-button'); // Renamed from keyword-search-button
+    const searchResultsContainer = document.getElementById('search-results-container'); // Renamed from keyword-results-container
+    const clearDbButton = document.getElementById('clear-db-button');
+    const topTraitsContainer = document.getElementById('top-traits-container');
+    const traitLoadingIndicator = document.getElementById('trait-loading-indicator');
+    const dnaCanvas = document.getElementById('dna-canvas');
 
 
-        let db;
-        let nextTraitUrl = null; // Variable to store the URL for the next page of traits
-        let isLoading = false; // State for DNA animation
-        let isFetchingTraits = false; // Flag to prevent multiple trait fetches
+    let db;
+    let nextTraitUrl = null; // Variable to store the URL for the next page of traits
+    let isLoading = false; // State for DNA animation
+    let isFetchingTraits = false; // Flag to prevent multiple trait fetches
 
-        // --- Three.js DNA Background ---
-        let scene, camera, renderer, dnaSegments = [], floatingMolecules = [];
-        const baseColor = new THREE.Color(0xaaaaaa); // Light Grey
-        const loadingColor = new THREE.Color(0x3b82f6); // Blue
-        const sphereRadius = 0.3; // Radius for backbone spheres
-        const stickRadius = 0.05; // Radius for connecting sticks
-        const floatSphereRadius = 0.5; // Slightly larger floating spheres
-        const floatStickLength = 2.5; // Slightly longer floating sticks
+    // --- Three.js DNA Background ---
+    let scene, camera, renderer, dnaSegments = [], floatingMolecules = [];
+    const baseColor = new THREE.Color(0xaaaaaa); // Light Grey
+    const loadingColor = new THREE.Color(0x3b82f6); // Blue
+    const sphereRadius = 0.3; // Radius for backbone spheres
+    const stickRadius = 0.05; // Radius for connecting sticks
+    const floatSphereRadius = 0.5; // Slightly larger floating spheres
+    const floatStickLength = 2.5; // Slightly longer floating sticks
 
-        function init3DBackground() {
-            scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            renderer = new THREE.WebGLRenderer({ canvas: dnaCanvas, alpha: true, antialias: true }); // Use existing canvas, make bg transparent
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setClearColor(0xf3f4f6, 1); // Match body background
+    function init3DBackground() {
+      scene = new THREE.Scene();
+      camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      renderer = new THREE.WebGLRenderer({ canvas: dnaCanvas, alpha: true, antialias: true }); // Use existing canvas, make bg transparent
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setClearColor(0xf3f4f6, 1); // Match body background
 
-            camera.position.z = 50;
+      camera.position.z = 50;
 
-            // Add some ambient light
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            scene.add(ambientLight);
+      // Add some ambient light
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+      scene.add(ambientLight);
 
-            // Add directional light
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
-            directionalLight.position.set(5, 10, 7.5);
-            scene.add(directionalLight);
+      // Add directional light
+      const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
+      directionalLight.position.set(5, 10, 7.5);
+      scene.add(directionalLight);
 
-            // --- Create DNA Segments ---
-            const numSegments = 6; // Reduced number further for very long segments
-            for (let i = 0; i < numSegments; i++) {
-                const segment = createDNASegmentBallStick(400); // Use 400 pairs for 5x length
-                segment.position.set(
-                    (Math.random() - 0.5) * 150,
-                    (Math.random() - 0.5) * 100, // Keep Y range smaller
-                    (Math.random() - 0.5) * 100 - 60 // Spread them out further in Z
-                );
-                 segment.rotation.set(
-                    (Math.random() - 0.5) * 0.15, // Very slight initial X tilt
-                    Math.random() * Math.PI * 2, // Allow full Y rotation
-                    (Math.random() - 0.5) * 1.5 // Increased Z rotation range (left-right tilt)
-                );
-                // Only spin on Y axis primarily
-                segment.userData.spinX = 0; // No X spin
-                segment.userData.spinY = (Math.random() - 0.5) * 0.005; // Slightly slower Y spin for long segments
-                scene.add(segment);
-                dnaSegments.push(segment);
+      // --- Create DNA Segments ---
+      const numSegments = 6; // Reduced number further for very long segments
+      for (let i = 0; i < numSegments; i++) {
+        const segment = createDNASegmentBallStick(400); // Use 400 pairs for 5x length
+        segment.position.set(
+          (Math.random() - 0.5) * 150,
+          (Math.random() - 0.5) * 100, // Keep Y range smaller
+          (Math.random() - 0.5) * 100 - 60 // Spread them out further in Z
+        );
+        segment.rotation.set(
+          (Math.random() - 0.5) * 0.15, // Very slight initial X tilt
+          Math.random() * Math.PI * 2, // Allow full Y rotation
+          (Math.random() - 0.5) * 1.5 // Increased Z rotation range (left-right tilt)
+        );
+        // Only spin on Y axis primarily
+        segment.userData.spinX = 0; // No X spin
+        segment.userData.spinY = (Math.random() - 0.5) * 0.005; // Slightly slower Y spin for long segments
+        scene.add(segment);
+        dnaSegments.push(segment);
+      }
+
+      // --- Create Floating Molecules ---
+      const numMolecules = 50; // Number of molecule groups
+      for (let i = 0; i < numMolecules; i++) {
+        const molecule = createFloatingMolecule();
+        molecule.position.set(
+          (Math.random() - 0.5) * 200,
+          (Math.random() - 0.5) * 150,
+          (Math.random() - 0.5) * 100 - 80
+        );
+        molecule.rotation.set(
+          Math.random() * Math.PI * 2,
+          Math.random() * Math.PI * 2,
+          Math.random() * Math.PI * 2
+        );
+        // Add slow random drift/rotation for the whole molecule
+        molecule.userData.driftX = (Math.random() - 0.5) * 0.005;
+        molecule.userData.driftY = (Math.random() - 0.5) * 0.005;
+        molecule.userData.driftZ = (Math.random() - 0.5) * 0.001;
+        molecule.userData.rotX = (Math.random() - 0.5) * 0.002;
+        molecule.userData.rotY = (Math.random() - 0.5) * 0.002;
+        molecule.userData.radius = 2.0; // Approximate radius for group collision
+
+        scene.add(molecule);
+        floatingMolecules.push(molecule);
+      }
+
+      animate3DBackground();
+    }
+
+    // --- Creates a cylinder mesh between two points ---
+    function createStick(point1, point2, material, radius = stickRadius) { // Added radius parameter
+      const direction = new THREE.Vector3().subVectors(point2, point1);
+      const orientation = new THREE.Matrix4();
+      orientation.lookAt(point1, point2, new THREE.Object3D().up);
+      orientation.multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)); // Align cylinder with direction vector
+
+      const length = direction.length();
+      if (length < 0.01) return null; // Avoid creating zero-length cylinders
+      const geometry = new THREE.CylinderGeometry(radius, radius, length, 8); // Use radius param
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.applyMatrix4(orientation);
+      mesh.position.copy(point1).add(direction.multiplyScalar(0.5)); // Position at midpoint
+      return mesh;
+    }
+
+    // --- Ball and Stick DNA Segment ---
+    function createDNASegmentBallStick(numPairs = 400, helixRadius = 2, baseDist = 1.5) { // Default numPairs is now 400
+      const group = new THREE.Group();
+      const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 16, 16); // Reusable sphere geometry
+      const strandMaterial1 = new THREE.MeshPhongMaterial({ color: 0x5555ff }); // Blue
+      const strandMaterial2 = new THREE.MeshPhongMaterial({ color: 0xff5555 }); // Red
+      const baseStickMaterial = new THREE.MeshPhongMaterial({ color: baseColor }); // Grey for bases
+
+      let prevPoint1 = null;
+      let prevPoint2 = null;
+
+      for (let i = 0; i < numPairs; i++) {
+        const angle = i * 0.5; // Controls twist
+        const y = i * baseDist - (numPairs * baseDist / 2); // Center the segment vertically
+
+        // --- Calculate points for spheres ---
+        const point1 = new THREE.Vector3(
+          Math.cos(angle) * helixRadius,
+          y,
+          Math.sin(angle) * helixRadius
+        );
+        const point2 = new THREE.Vector3(
+          Math.cos(angle + Math.PI) * helixRadius,
+          y,
+          Math.sin(angle + Math.PI) * helixRadius
+        );
+
+        // --- Create Spheres (Backbone) ---
+        const sphere1 = new THREE.Mesh(sphereGeometry, strandMaterial1);
+        sphere1.position.copy(point1);
+        group.add(sphere1);
+
+        const sphere2 = new THREE.Mesh(sphereGeometry, strandMaterial2);
+        sphere2.position.copy(point2);
+        group.add(sphere2);
+
+        // --- Create Sticks (Bases connecting strands) ---
+        const baseStick = createStick(point1, point2, baseStickMaterial);
+        if (baseStick) { // Check if stick was created
+          group.add(baseStick);
+          baseStick.userData.isBase = true; // Mark for color change
+        }
+
+        // --- Create Sticks (Connecting backbone spheres) ---
+        if (prevPoint1) { // Don't create for the first pair
+          const backboneStick1 = createStick(prevPoint1, point1, strandMaterial1);
+          if (backboneStick1) group.add(backboneStick1);
+          const backboneStick2 = createStick(prevPoint2, point2, strandMaterial2);
+          if (backboneStick2) group.add(backboneStick2);
+        }
+
+        prevPoint1 = point1;
+        prevPoint2 = point2;
+      }
+
+      return group;
+    }
+
+    // --- Creates a random floating molecule ---
+    function createFloatingMolecule() {
+      const moleculeGroup = new THREE.Group();
+      const numSpheres = Math.floor(Math.random() * 4) + 1; // 1 to 4 spheres
+      const numSticks = Math.floor(Math.random() * (numSpheres > 1 ? numSpheres : 2)); // 0 to numSpheres-1 sticks (or 0-1 if 1 sphere)
+
+      const sphereGeometry = new THREE.SphereGeometry(floatSphereRadius, 12, 12);
+      const randomColor = new THREE.Color(Math.random() * 0xffffff);
+      const material = new THREE.MeshPhongMaterial({
+        color: randomColor,
+        transparent: true,
+        opacity: 0.85
+      });
+
+      const spheres = [];
+      // Create spheres at random nearby positions
+      for (let i = 0; i < numSpheres; i++) {
+        const sphere = new THREE.Mesh(sphereGeometry, material);
+        sphere.position.set(
+          (Math.random() - 0.5) * floatStickLength * 1.5,
+          (Math.random() - 0.5) * floatStickLength * 1.5,
+          (Math.random() - 0.5) * floatStickLength * 1.5
+        );
+        moleculeGroup.add(sphere);
+        spheres.push(sphere);
+        sphere.userData.isFloaterPart = true; // Mark for color change later
+      }
+
+      // Create sticks connecting random spheres (ensure at least one if possible)
+      if (numSpheres > 1 && numSticks > 0) {
+        for (let i = 0; i < numSticks; i++) {
+          const sphere1Index = Math.floor(Math.random() * numSpheres);
+          let sphere2Index = Math.floor(Math.random() * numSpheres);
+          // Ensure different spheres are connected
+          while (sphere2Index === sphere1Index) {
+            sphere2Index = Math.floor(Math.random() * numSpheres);
+          }
+          const stick = createStick(spheres[sphere1Index].position, spheres[sphere2Index].position, material, stickRadius * 1.5); // Thicker sticks
+          if (stick) {
+            moleculeGroup.add(stick);
+            stick.userData.isFloaterPart = true; // Mark for color change later
+          }
+        }
+      } else if (numSpheres === 1 && numSticks > 0) {
+        // If only one sphere, add one stick extending randomly
+        const stickEnd = new THREE.Vector3(
+          (Math.random() - 0.5) * floatStickLength,
+          (Math.random() - 0.5) * floatStickLength,
+          (Math.random() - 0.5) * floatStickLength
+        );
+        const stick = createStick(spheres[0].position, spheres[0].position.clone().add(stickEnd), material, stickRadius * 1.5);
+        if (stick) {
+          moleculeGroup.add(stick);
+          stick.userData.isFloaterPart = true; // Mark for color change later
+        }
+      }
+
+      // Ensure at least one sphere and one stick are connected if both exist
+      if (numSpheres > 0 && numSticks === 0) {
+        // Add at least one stick if none were created but spheres exist
+        const stickEnd = new THREE.Vector3(
+          (Math.random() - 0.5) * floatStickLength,
+          (Math.random() - 0.5) * floatStickLength,
+          (Math.random() - 0.5) * floatStickLength
+        );
+        const stick = createStick(spheres[0].position, spheres[0].position.clone().add(stickEnd), material, stickRadius * 1.5);
+        if (stick) {
+          moleculeGroup.add(stick);
+          stick.userData.isFloaterPart = true; // Mark for color change later
+        }
+      }
+
+
+      return moleculeGroup;
+    }
+
+
+    function animate3DBackground() {
+      requestAnimationFrame(animate3DBackground);
+
+      const targetColor = isLoading ? loadingColor : baseColor;
+      const rotationSpeedMultiplier = isLoading ? 15 : 1; // Faster spin when loading
+
+      // Animate DNA Segments (primarily Y rotation)
+      dnaSegments.forEach(segment => {
+        segment.rotation.y += segment.userData.spinY * rotationSpeedMultiplier;
+        segment.rotation.x = Math.max(-0.15, Math.min(0.15, segment.rotation.x)); // Further reduced X tilt
+
+        // Smoothly transition base color
+        segment.children.forEach(child => {
+          if (child.userData.isBase && child.material instanceof THREE.MeshPhongMaterial) {
+            child.material.color.lerp(targetColor, 0.05);
+          }
+        });
+      });
+
+      // Animate Floating Molecules & Collision Check
+      for (let i = 0; i < floatingMolecules.length; i++) {
+        const molecule = floatingMolecules[i];
+
+        molecule.position.x += molecule.userData.driftX;
+        molecule.position.y += molecule.userData.driftY;
+        molecule.position.z += molecule.userData.driftZ;
+        molecule.rotation.x += molecule.userData.rotX;
+        molecule.rotation.y += molecule.userData.rotY;
+
+        // Simple boundary check to wrap elements around
+        if (molecule.position.x > 120 || molecule.position.x < -120) molecule.userData.driftX *= -1;
+        if (molecule.position.y > 90 || molecule.position.y < -90) molecule.userData.driftY *= -1;
+        if (molecule.position.z > 0 || molecule.position.z < -100) molecule.userData.driftZ *= -1; // Keep them behind
+
+        // Fade color during loading for molecules (applied to all parts)
+        molecule.children.forEach(child => {
+          if (child.material instanceof THREE.MeshPhongMaterial) {
+            // Note: We are lerping the *material's* color directly now
+            if (child.userData.isFloaterPart) {
+              // Lerp towards grey normally, lerp towards blue when loading
+              const moleculeTargetColor = isLoading ? loadingColor : baseColor;
+              child.material.color.lerp(moleculeTargetColor, 0.05);
             }
+          }
+        });
 
-            // --- Create Floating Molecules ---
-            const numMolecules = 50; // Number of molecule groups
-            for (let i = 0; i < numMolecules; i++) {
-                const molecule = createFloatingMolecule();
-                molecule.position.set(
-                    (Math.random() - 0.5) * 200,
-                    (Math.random() - 0.5) * 150,
-                    (Math.random() - 0.5) * 100 - 80
-                );
-                 molecule.rotation.set(
-                    Math.random() * Math.PI * 2,
-                    Math.random() * Math.PI * 2,
-                    Math.random() * Math.PI * 2
-                );
-                // Add slow random drift/rotation for the whole molecule
-                molecule.userData.driftX = (Math.random() - 0.5) * 0.005;
-                molecule.userData.driftY = (Math.random() - 0.5) * 0.005;
-                molecule.userData.driftZ = (Math.random() - 0.5) * 0.001;
-                molecule.userData.rotX = (Math.random() - 0.5) * 0.002;
-                molecule.userData.rotY = (Math.random() - 0.5) * 0.002;
-                molecule.userData.radius = 2.0; // Approximate radius for group collision
 
-                scene.add(molecule);
-                floatingMolecules.push(molecule);
-            }
+        // --- Basic Collision Detection between molecules ---
+        for (let j = i + 1; j < floatingMolecules.length; j++) {
+          const otherMolecule = floatingMolecules[j];
+          const distSq = molecule.position.distanceToSquared(otherMolecule.position);
+          const minDist = molecule.userData.radius + otherMolecule.userData.radius; // Use group radius
+          const minDistSq = minDist * minDist;
 
-            animate3DBackground();
+          if (distSq < minDistSq) {
+            // Reverse drift directions for both molecules
+            const tempDriftX = molecule.userData.driftX;
+            const tempDriftY = molecule.userData.driftY;
+            const tempDriftZ = molecule.userData.driftZ;
+
+            molecule.userData.driftX = otherMolecule.userData.driftX;
+            molecule.userData.driftY = otherMolecule.userData.driftY;
+            molecule.userData.driftZ = otherMolecule.userData.driftZ;
+
+            otherMolecule.userData.driftX = tempDriftX;
+            otherMolecule.userData.driftY = tempDriftY;
+            otherMolecule.userData.driftZ = tempDriftZ;
+
+            // Slightly push them apart
+            const overlap = minDist - Math.sqrt(distSq);
+            const direction = new THREE.Vector3().subVectors(molecule.position, otherMolecule.position).normalize();
+            molecule.position.add(direction.multiplyScalar(overlap * 0.5));
+            otherMolecule.position.sub(direction.multiplyScalar(overlap * 0.5));
+          }
+        }
+      }
+
+
+      renderer.render(scene, camera);
+    }
+
+    function onWindowResize() {
+      if (!camera || !renderer) return; // Add check if not initialized
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+    window.addEventListener('resize', onWindowResize, false);
+
+    // Function to update loading state
+    function setLoadingState(loading) {
+      isLoading = loading;
+    }
+
+
+    // --- IndexedDB Initialization ---
+    function initDB() {
+      const request = indexedDB.open('GeneticsDB', 1);
+
+      request.onerror = (event) => {
+        console.error("Database error:", event.target.error);
+        dbStatusEl.textContent = "Error: Could not open database.";
+        dbStatusEl.classList.add('text-red-500');
+      };
+
+      request.onsuccess = (event) => {
+        db = event.target.result;
+        console.log("Database opened successfully.");
+        checkDBStatus(); // Check if data already exists
+      };
+
+      // This event is only fired when the database is created or version is changed
+      request.onupgradeneeded = (event) => {
+        const db = event.target.result;
+        // Create an objectStore to hold information about our SNPs. We use "rsid" as the key path.
+        const objectStore = db.createObjectStore("snps", { keyPath: "rsid" });
+
+        // Create indexes to search by other fields if needed in the future
+        objectStore.createIndex("chromosome", "chromosome", { unique: false });
+        objectStore.createIndex("position", "position", { unique: false });
+        console.log("Object store and indexes created.");
+      };
+    }
+
+    // --- Database & App State Functions ---
+    function checkDBStatus() {
+      if (!db) return;
+      try {
+        const transaction = db.transaction(['snps'], 'readonly');
+        const store = transaction.objectStore('snps');
+        const countRequest = store.count();
+
+        countRequest.onsuccess = () => {
+          const count = countRequest.result;
+          if (count > 0) {
+            dbStatusEl.textContent = `Status: Loaded ${count.toLocaleString()} records from cache.`;
+            dbStatusEl.classList.add('text-green-600');
+            activateApp();
+          } else {
+            dbStatusEl.textContent = "Status: Database is empty. Please select a file.";
+            dbStatusEl.classList.add('text-green-600');
+          }
+        };
+        countRequest.onerror = (event) => {
+          console.error("Error counting records:", event.target.error);
+          dbStatusEl.textContent = "Error: Could not check database status.";
+        }
+      } catch (e) {
+        console.error("Error accessing object store. It might not exist yet:", e);
+        dbStatusEl.textContent = "Status: Database ready. Please select a file.";
+      }
+    }
+
+    function activateApp() {
+      uploadCard.classList.add('hidden');
+      progressCard.classList.add('hidden');
+      // lookupCard no longer exists
+      searchCard.classList.remove('opacity-50', 'pointer-events-none'); // Activate the main search card
+      clearDbButton.classList.remove('hidden');
+      // resultsContainer no longer exists for direct rsID lookup
+      searchResultsContainer.innerHTML = ''; // Clear main results
+      setLoadingState(false); // Ensure loading stops if activating from cache
+    }
+
+    function clearDatabase() {
+      if (!db) return;
+      const transaction = db.transaction(['snps'], 'readwrite');
+      const store = transaction.objectStore('snps');
+      const request = store.clear();
+
+      request.onsuccess = () => {
+        console.log("Database cleared.");
+        // Reloading the page is the simplest way to reset the UI state.
+        window.location.reload();
+      };
+      request.onerror = (event) => {
+        console.error("Error clearing database:", event.target.error);
+        searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">Error clearing the database.</div>`;
+      };
+    }
+
+
+    // --- File Handling and Processing ---
+    function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      setLoadingState(true); // Start loading animation
+      uploadCard.classList.add('hidden');
+      progressCard.classList.remove('hidden');
+
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        processData(e.target.result);
+      };
+
+      reader.onerror = (e) => {
+        progressText.textContent = "Error reading file.";
+        console.error("FileReader error:", e);
+        setLoadingState(false); // Stop loading on error
+      };
+
+      reader.readAsText(file);
+    }
+
+    function processData(fileContents) {
+      const lines = fileContents.split('\n');
+      const dataLines = lines.filter(line => line.trim() && !line.startsWith('#') && !line.startsWith('rsid'));
+      const totalLines = dataLines.length;
+      let processedCount = 0;
+      const batchSize = 5000; // Process 5000 records per transaction for performance
+
+      function processChunk(startIndex) {
+        if (startIndex >= totalLines) {
+          handleImportComplete(totalLines);
+          return;
         }
 
-        // --- Creates a cylinder mesh between two points ---
-        function createStick(point1, point2, material, radius = stickRadius) { // Added radius parameter
-            const direction = new THREE.Vector3().subVectors(point2, point1);
-            const orientation = new THREE.Matrix4();
-            orientation.lookAt(point1, point2, new THREE.Object3D().up);
-            orientation.multiply(new THREE.Matrix4().makeRotationX(Math.PI / 2)); // Align cylinder with direction vector
+        const transaction = db.transaction(['snps'], 'readwrite');
+        const store = transaction.objectStore('snps');
 
-            const length = direction.length();
-            if (length < 0.01) return null; // Avoid creating zero-length cylinders
-            const geometry = new THREE.CylinderGeometry(radius, radius, length, 8); // Use radius param
-            const mesh = new THREE.Mesh(geometry, material);
-            mesh.applyMatrix4(orientation);
-            mesh.position.copy(point1).add(direction.multiplyScalar(0.5)); // Position at midpoint
-            return mesh;
-        }
+        const endIndex = Math.min(startIndex + batchSize, totalLines);
 
-        // --- Ball and Stick DNA Segment ---
-        function createDNASegmentBallStick(numPairs = 400, helixRadius = 2, baseDist = 1.5) { // Default numPairs is now 400
-            const group = new THREE.Group();
-            const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 16, 16); // Reusable sphere geometry
-            const strandMaterial1 = new THREE.MeshPhongMaterial({ color: 0x5555ff }); // Blue
-            const strandMaterial2 = new THREE.MeshPhongMaterial({ color: 0xff5555 }); // Red
-            const baseStickMaterial = new THREE.MeshPhongMaterial({ color: baseColor }); // Grey for bases
-
-            let prevPoint1 = null;
-            let prevPoint2 = null;
-
-            for (let i = 0; i < numPairs; i++) {
-                const angle = i * 0.5; // Controls twist
-                const y = i * baseDist - (numPairs * baseDist / 2); // Center the segment vertically
-
-                // --- Calculate points for spheres ---
-                const point1 = new THREE.Vector3(
-                    Math.cos(angle) * helixRadius,
-                    y,
-                    Math.sin(angle) * helixRadius
-                );
-                const point2 = new THREE.Vector3(
-                    Math.cos(angle + Math.PI) * helixRadius,
-                    y,
-                    Math.sin(angle + Math.PI) * helixRadius
-                );
-
-                // --- Create Spheres (Backbone) ---
-                const sphere1 = new THREE.Mesh(sphereGeometry, strandMaterial1);
-                sphere1.position.copy(point1);
-                group.add(sphere1);
-
-                const sphere2 = new THREE.Mesh(sphereGeometry, strandMaterial2);
-                sphere2.position.copy(point2);
-                group.add(sphere2);
-
-                // --- Create Sticks (Bases connecting strands) ---
-                const baseStick = createStick(point1, point2, baseStickMaterial);
-                if (baseStick) { // Check if stick was created
-                    group.add(baseStick);
-                    baseStick.userData.isBase = true; // Mark for color change
-                }
-
-                // --- Create Sticks (Connecting backbone spheres) ---
-                if (prevPoint1) { // Don't create for the first pair
-                    const backboneStick1 = createStick(prevPoint1, point1, strandMaterial1);
-                    if (backboneStick1) group.add(backboneStick1);
-                    const backboneStick2 = createStick(prevPoint2, point2, strandMaterial2);
-                    if (backboneStick2) group.add(backboneStick2);
-                }
-
-                prevPoint1 = point1;
-                prevPoint2 = point2;
-            }
-
-            return group;
-        }
-
-        // --- Creates a random floating molecule ---
-        function createFloatingMolecule() {
-            const moleculeGroup = new THREE.Group();
-            const numSpheres = Math.floor(Math.random() * 4) + 1; // 1 to 4 spheres
-            const numSticks = Math.floor(Math.random() * (numSpheres > 1 ? numSpheres : 2)); // 0 to numSpheres-1 sticks (or 0-1 if 1 sphere)
-
-            const sphereGeometry = new THREE.SphereGeometry(floatSphereRadius, 12, 12);
-            const randomColor = new THREE.Color(Math.random() * 0xffffff);
-            const material = new THREE.MeshPhongMaterial({
-                color: randomColor,
-                transparent: true,
-                opacity: 0.85
-            });
-
-            const spheres = [];
-            // Create spheres at random nearby positions
-            for (let i = 0; i < numSpheres; i++) {
-                const sphere = new THREE.Mesh(sphereGeometry, material);
-                sphere.position.set(
-                    (Math.random() - 0.5) * floatStickLength * 1.5,
-                    (Math.random() - 0.5) * floatStickLength * 1.5,
-                    (Math.random() - 0.5) * floatStickLength * 1.5
-                );
-                 moleculeGroup.add(sphere);
-                 spheres.push(sphere);
-                 sphere.userData.isFloaterPart = true; // Mark for color change later
-            }
-
-            // Create sticks connecting random spheres (ensure at least one if possible)
-            if (numSpheres > 1 && numSticks > 0) {
-                 for (let i = 0; i < numSticks; i++) {
-                     const sphere1Index = Math.floor(Math.random() * numSpheres);
-                     let sphere2Index = Math.floor(Math.random() * numSpheres);
-                     // Ensure different spheres are connected
-                     while (sphere2Index === sphere1Index) {
-                         sphere2Index = Math.floor(Math.random() * numSpheres);
-                     }
-                     const stick = createStick(spheres[sphere1Index].position, spheres[sphere2Index].position, material, stickRadius * 1.5); // Thicker sticks
-                     if(stick) {
-                        moleculeGroup.add(stick);
-                        stick.userData.isFloaterPart = true; // Mark for color change later
-                     }
-                 }
-             } else if (numSpheres === 1 && numSticks > 0) {
-                 // If only one sphere, add one stick extending randomly
-                 const stickEnd = new THREE.Vector3(
-                     (Math.random() - 0.5) * floatStickLength,
-                     (Math.random() - 0.5) * floatStickLength,
-                     (Math.random() - 0.5) * floatStickLength
-                 );
-                 const stick = createStick(spheres[0].position, spheres[0].position.clone().add(stickEnd), material, stickRadius * 1.5);
-                 if(stick) {
-                    moleculeGroup.add(stick);
-                    stick.userData.isFloaterPart = true; // Mark for color change later
-                 }
-             }
-
-            // Ensure at least one sphere and one stick are connected if both exist
-            if (numSpheres > 0 && numSticks === 0) {
-                // Add at least one stick if none were created but spheres exist
-                const stickEnd = new THREE.Vector3(
-                     (Math.random() - 0.5) * floatStickLength,
-                     (Math.random() - 0.5) * floatStickLength,
-                     (Math.random() - 0.5) * floatStickLength
-                 );
-                 const stick = createStick(spheres[0].position, spheres[0].position.clone().add(stickEnd), material, stickRadius * 1.5);
-                  if(stick) {
-                    moleculeGroup.add(stick);
-                    stick.userData.isFloaterPart = true; // Mark for color change later
-                 }
-            }
-
-
-            return moleculeGroup;
-        }
-
-
-        function animate3DBackground() {
-            requestAnimationFrame(animate3DBackground);
-
-            const targetColor = isLoading ? loadingColor : baseColor;
-            const rotationSpeedMultiplier = isLoading ? 15 : 1; // Faster spin when loading
-
-            // Animate DNA Segments (primarily Y rotation)
-            dnaSegments.forEach(segment => {
-                segment.rotation.y += segment.userData.spinY * rotationSpeedMultiplier;
-                segment.rotation.x = Math.max(-0.15, Math.min(0.15, segment.rotation.x)); // Further reduced X tilt
-
-                // Smoothly transition base color
-                segment.children.forEach(child => {
-                    if (child.userData.isBase && child.material instanceof THREE.MeshPhongMaterial) {
-                         child.material.color.lerp(targetColor, 0.05);
-                    }
-                });
-            });
-
-             // Animate Floating Molecules & Collision Check
-            for (let i = 0; i < floatingMolecules.length; i++) {
-                const molecule = floatingMolecules[i];
-
-                molecule.position.x += molecule.userData.driftX;
-                molecule.position.y += molecule.userData.driftY;
-                molecule.position.z += molecule.userData.driftZ;
-                molecule.rotation.x += molecule.userData.rotX;
-                molecule.rotation.y += molecule.userData.rotY;
-
-                // Simple boundary check to wrap elements around
-                if (molecule.position.x > 120 || molecule.position.x < -120) molecule.userData.driftX *= -1;
-                if (molecule.position.y > 90 || molecule.position.y < -90) molecule.userData.driftY *= -1;
-                if (molecule.position.z > 0 || molecule.position.z < -100) molecule.userData.driftZ *= -1; // Keep them behind
-
-                 // Fade color during loading for molecules (applied to all parts)
-                 molecule.children.forEach(child => {
-                      if (child.material instanceof THREE.MeshPhongMaterial) {
-                          // Note: We are lerping the *material's* color directly now
-                          if(child.userData.isFloaterPart) {
-                             // Lerp towards grey normally, lerp towards blue when loading
-                             const moleculeTargetColor = isLoading ? loadingColor : baseColor;
-                             child.material.color.lerp(moleculeTargetColor, 0.05);
-                          }
-                      }
-                 });
-
-
-                // --- Basic Collision Detection between molecules ---
-                for (let j = i + 1; j < floatingMolecules.length; j++) {
-                    const otherMolecule = floatingMolecules[j];
-                    const distSq = molecule.position.distanceToSquared(otherMolecule.position);
-                    const minDist = molecule.userData.radius + otherMolecule.userData.radius; // Use group radius
-                    const minDistSq = minDist * minDist;
-
-                    if (distSq < minDistSq) {
-                        // Reverse drift directions for both molecules
-                        const tempDriftX = molecule.userData.driftX;
-                        const tempDriftY = molecule.userData.driftY;
-                        const tempDriftZ = molecule.userData.driftZ;
-
-                        molecule.userData.driftX = otherMolecule.userData.driftX;
-                        molecule.userData.driftY = otherMolecule.userData.driftY;
-                        molecule.userData.driftZ = otherMolecule.userData.driftZ;
-
-                        otherMolecule.userData.driftX = tempDriftX;
-                        otherMolecule.userData.driftY = tempDriftY;
-                        otherMolecule.userData.driftZ = tempDriftZ;
-
-                        // Slightly push them apart
-                        const overlap = minDist - Math.sqrt(distSq);
-                        const direction = new THREE.Vector3().subVectors(molecule.position, otherMolecule.position).normalize();
-                        molecule.position.add(direction.multiplyScalar(overlap * 0.5));
-                        otherMolecule.position.sub(direction.multiplyScalar(overlap * 0.5));
-                    }
-                }
-            }
-
-
-            renderer.render(scene, camera);
-        }
-
-        function onWindowResize() {
-             if (!camera || !renderer) return; // Add check if not initialized
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-        window.addEventListener('resize', onWindowResize, false);
-
-        // Function to update loading state
-        function setLoadingState(loading) {
-            isLoading = loading;
-        }
-
-
-        // --- IndexedDB Initialization ---
-        function initDB() {
-            const request = indexedDB.open('GeneticsDB', 1);
-
-            request.onerror = (event) => {
-                console.error("Database error:", event.target.error);
-                dbStatusEl.textContent = "Error: Could not open database.";
-                dbStatusEl.classList.add('text-red-500');
+        for (let i = startIndex; i < endIndex; i++) {
+          const columns = dataLines[i].split('\t');
+          if (columns.length === 5) {
+            const snpRecord = {
+              rsid: columns[0].trim(),
+              chromosome: columns[1].trim(),
+              position: parseInt(columns[2], 10),
+              allele1: columns[3].trim(),
+              allele2: columns[4].trim()
             };
-
-            request.onsuccess = (event) => {
-                db = event.target.result;
-                console.log("Database opened successfully.");
-                checkDBStatus(); // Check if data already exists
-            };
-
-            // This event is only fired when the database is created or version is changed
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                // Create an objectStore to hold information about our SNPs. We use "rsid" as the key path.
-                const objectStore = db.createObjectStore("snps", { keyPath: "rsid" });
-
-                // Create indexes to search by other fields if needed in the future
-                objectStore.createIndex("chromosome", "chromosome", { unique: false });
-                objectStore.createIndex("position", "position", { unique: false });
-                console.log("Object store and indexes created.");
-            };
+            store.put(snpRecord);
+          }
         }
 
-        // --- Database & App State Functions ---
-        function checkDBStatus() {
-            if (!db) return;
-            try {
-                const transaction = db.transaction(['snps'], 'readonly');
-                const store = transaction.objectStore('snps');
-                const countRequest = store.count();
+        transaction.oncomplete = () => {
+          processedCount = endIndex;
+          updateProgress(processedCount, totalLines);
+          // Process next chunk asynchronously to prevent UI freeze
+          setTimeout(() => processChunk(endIndex), 0);
+        };
 
-                countRequest.onsuccess = () => {
-                    const count = countRequest.result;
-                    if (count > 0) {
-                        dbStatusEl.textContent = `Status: Loaded ${count.toLocaleString()} records from cache.`;
-                        dbStatusEl.classList.add('text-green-600');
-                        activateApp();
-                    } else {
-                        dbStatusEl.textContent = "Status: Database is empty. Please select a file.";
-                        dbStatusEl.classList.add('text-green-600');
-                    }
-                };
-                countRequest.onerror = (event) => {
-                    console.error("Error counting records:", event.target.error);
-                    dbStatusEl.textContent = "Error: Could not check database status.";
-                }
-            } catch(e) {
-                 console.error("Error accessing object store. It might not exist yet:", e);
-                 dbStatusEl.textContent = "Status: Database ready. Please select a file.";
-            }
-        }
+        transaction.onerror = (event) => {
+          console.error("Transaction error:", event.target.error);
+          progressText.textContent = `Error during import at record ${startIndex}.`;
+          setLoadingState(false); // Stop loading on error
+        };
+      }
 
-        function activateApp() {
-            uploadCard.classList.add('hidden');
-            progressCard.classList.add('hidden');
-            // lookupCard no longer exists
-            searchCard.classList.remove('opacity-50', 'pointer-events-none'); // Activate the main search card
-            clearDbButton.classList.remove('hidden');
-            // resultsContainer no longer exists for direct rsID lookup
-             searchResultsContainer.innerHTML = ''; // Clear main results
-             setLoadingState(false); // Ensure loading stops if activating from cache
-        }
+      // Start the import process
+      processChunk(0);
+    }
 
-        function clearDatabase() {
-            if (!db) return;
-            const transaction = db.transaction(['snps'], 'readwrite');
-            const store = transaction.objectStore('snps');
-            const request = store.clear();
+    // --- UI Update Functions ---
+    function updateProgress(current, total) {
+      const percentage = total > 0 ? (current / total) * 100 : 0;
+      progressBar.style.width = `${percentage}%`;
+      progressText.textContent = `Processed ${current.toLocaleString()} / ${total.toLocaleString()} records...`;
+    }
 
-            request.onsuccess = () => {
-                console.log("Database cleared.");
-                // Reloading the page is the simplest way to reset the UI state.
-                window.location.reload();
-            };
-            request.onerror = (event) => {
-                console.error("Error clearing database:", event.target.error);
-                searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">Error clearing the database.</div>`;
-            };
-        }
-
-
-        // --- File Handling and Processing ---
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            setLoadingState(true); // Start loading animation
-            uploadCard.classList.add('hidden');
-            progressCard.classList.remove('hidden');
-
-            const reader = new FileReader();
-
-            reader.onload = (e) => {
-                processData(e.target.result);
-            };
-
-            reader.onerror = (e) => {
-                progressText.textContent = "Error reading file.";
-                console.error("FileReader error:", e);
-                 setLoadingState(false); // Stop loading on error
-            };
-
-            reader.readAsText(file);
-        }
-
-        function processData(fileContents) {
-            const lines = fileContents.split('\n');
-            const dataLines = lines.filter(line => line.trim() && !line.startsWith('#') && !line.startsWith('rsid'));
-            const totalLines = dataLines.length;
-            let processedCount = 0;
-            const batchSize = 5000; // Process 5000 records per transaction for performance
-
-            function processChunk(startIndex) {
-                if (startIndex >= totalLines) {
-                    handleImportComplete(totalLines);
-                    return;
-                }
-
-                const transaction = db.transaction(['snps'], 'readwrite');
-                const store = transaction.objectStore('snps');
-
-                const endIndex = Math.min(startIndex + batchSize, totalLines);
-
-                for (let i = startIndex; i < endIndex; i++) {
-                    const columns = dataLines[i].split('\t');
-                    if (columns.length === 5) {
-                        const snpRecord = {
-                            rsid: columns[0].trim(),
-                            chromosome: columns[1].trim(),
-                            position: parseInt(columns[2], 10),
-                            allele1: columns[3].trim(),
-                            allele2: columns[4].trim()
-                        };
-                        store.put(snpRecord);
-                    }
-                }
-
-                transaction.oncomplete = () => {
-                    processedCount = endIndex;
-                    updateProgress(processedCount, totalLines);
-                    // Process next chunk asynchronously to prevent UI freeze
-                    setTimeout(() => processChunk(endIndex), 0);
-                };
-
-                transaction.onerror = (event) => {
-                    console.error("Transaction error:", event.target.error);
-                    progressText.textContent = `Error during import at record ${startIndex}.`;
-                    setLoadingState(false); // Stop loading on error
-                };
-            }
-
-            // Start the import process
-            processChunk(0);
-        }
-
-        // --- UI Update Functions ---
-        function updateProgress(current, total) {
-            const percentage = total > 0 ? (current / total) * 100 : 0;
-            progressBar.style.width = `${percentage}%`;
-            progressText.textContent = `Processed ${current.toLocaleString()} / ${total.toLocaleString()} records...`;
-        }
-
-        function handleImportComplete(totalRecords) {
-            activateApp(); // This will also call setLoadingState(false)
-            // Show a summary message in the main results area
-            searchResultsContainer.innerHTML = `
+    function handleImportComplete(totalRecords) {
+      activateApp(); // This will also call setLoadingState(false)
+      // Show a summary message in the main results area
+      searchResultsContainer.innerHTML = `
                 <div class="p-4 bg-green-100 border border-green-200 text-green-800 rounded-lg">
                     <p class="font-semibold">Import Complete!</p>
                     <p>${totalRecords.toLocaleString()} records were successfully imported into the local database.</p>
                 </div>
             `;
+    }
+
+
+    // --- Combined Search Logic ---
+    async function handleSearch() {
+      const query = mainSearchInput.value.trim();
+      if (!query) {
+        searchResultsContainer.innerHTML = `<p class="text-red-500">Please enter a keyword or rsID to search.</p>`;
+        return;
+      }
+
+      setLoadingState(true); // Start loading animation
+      searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Searching for "${query}"...</div>`;
+
+      // Check if it's an rsID
+      const rsIdPattern = /^rs\d+$/i;
+      if (rsIdPattern.test(query)) {
+        await searchSingleSNP(query);
+      } else {
+        await searchByKeyword(query);
+      }
+      setLoadingState(false); // Stop loading animation after search completes or errors
+    }
+
+    // --- Search for a single SNP by rsID ---
+    async function searchSingleSNP(rsid) {
+      try {
+        // Fetch SNP details - includes links to associations
+        const snpResponse = await fetch(`https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/${rsid}`);
+        if (!snpResponse.ok) {
+          if (snpResponse.status === 404) {
+            throw new Error(`SNP ${rsid} not found in the GWAS Catalog.`);
+          }
+          throw new Error(`API Error (SNP): ${snpResponse.status} ${snpResponse.statusText}`);
+        }
+        const snpData = await snpResponse.json();
+
+        // Get the link to fetch associations for this SNP
+        const assocUrl = snpData._links?.associations?.href;
+        if (!assocUrl) {
+          searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No associated traits found for SNP ${rsid} in the GWAS Catalog.</div>`;
+          return;
         }
 
+        searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found SNP ${rsid}. Fetching associated traits...</div>`;
 
-        // --- Combined Search Logic ---
-        async function handleSearch() {
-             const query = mainSearchInput.value.trim();
-             if (!query) {
-                 searchResultsContainer.innerHTML = `<p class="text-red-500">Please enter a keyword or rsID to search.</p>`;
-                 return;
-             }
+        // Fetch all associations for this SNP (handling pagination)
+        let allSnpAssociations = [];
+        let nextAssocUrl = assocUrl;
+        const fetchErrors = [];
 
-             setLoadingState(true); // Start loading animation
-             searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Searching for "${query}"...</div>`;
-
-             // Check if it's an rsID
-             const rsIdPattern = /^rs\d+$/i;
-             if (rsIdPattern.test(query)) {
-                 await searchSingleSNP(query);
-             } else {
-                 await searchByKeyword(query);
-             }
-             setLoadingState(false); // Stop loading animation after search completes or errors
-        }
-
-        // --- Search for a single SNP by rsID ---
-        async function searchSingleSNP(rsid) {
-             try {
-                // Fetch SNP details - includes links to associations
-                const snpResponse = await fetch(`https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/${rsid}`);
-                 if (!snpResponse.ok) {
-                     if (snpResponse.status === 404) {
-                         throw new Error(`SNP ${rsid} not found in the GWAS Catalog.`);
-                     }
-                     throw new Error(`API Error (SNP): ${snpResponse.status} ${snpResponse.statusText}`);
-                 }
-                 const snpData = await snpResponse.json();
-
-                // Get the link to fetch associations for this SNP
-                const assocUrl = snpData._links?.associations?.href;
-                 if (!assocUrl) {
-                    searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No associated traits found for SNP ${rsid} in the GWAS Catalog.</div>`;
-                     return;
-                 }
-
-                 searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found SNP ${rsid}. Fetching associated traits...</div>`;
-
-                // Fetch all associations for this SNP (handling pagination)
-                let allSnpAssociations = [];
-                let nextAssocUrl = assocUrl;
-                 const fetchErrors = [];
-
-                 while (nextAssocUrl) {
-                    try {
-                        const assocResponse = await fetch(nextAssocUrl);
-                        if (!assocResponse.ok) {
-                             if (assocResponse.status !== 404) { // Ignore 404s for associations page
-                                fetchErrors.push(`Failed fetching associations: ${assocResponse.statusText}`);
-                             }
-                            break; // Stop pagination on error
-                        }
-                        const assocData = await assocResponse.json();
-                        if (assocData._embedded?.associations) {
-                            allSnpAssociations.push(...assocData._embedded.associations);
-                        }
-                        nextAssocUrl = assocData._links?.next?.href;
-                    } catch(err) {
-                        fetchErrors.push(`Network error fetching associations: ${err.message}`);
-                        break; // Stop on network error
-                    }
-                 }
-
-                 if (allSnpAssociations.length === 0) {
-                     if (fetchErrors.length > 0) {
-                        searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg"><strong class="font-semibold">API Error:</strong> Could not retrieve associations for ${rsid}. Errors: ${fetchErrors.join(', ')}</div>`;
-                     } else {
-                        searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No associated traits found for SNP ${rsid} in the GWAS Catalog.</div>`;
-                     }
-                     return;
-                 }
-
-                 // Build the rsidInfoMap for this single SNP
-                 const rsidInfoMap = new Map();
-                 rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set() });
-                 const info = rsidInfoMap.get(rsid);
-
-                 for (const assoc of allSnpAssociations) {
-                     const studyUrl = assoc._links?.study?.href;
-                     if (studyUrl) info.studyUrls.add(studyUrl);
-
-                     // Attempt to get trait from EFO traits linked to the association first
-                     const efoTraitsUrl = assoc._links?.efoTraits?.href;
-                     if (efoTraitsUrl) {
-                         try {
-                             const efoResponse = await fetch(efoTraitsUrl);
-                             if (efoResponse.ok) {
-                                 const efoData = await efoResponse.json();
-                                 efoData._embedded?.efoTraits?.forEach(t => info.traits.add(t.trait));
-                             }
-                         } catch (efoErr) {
-                             console.warn(`Could not fetch EFO traits for association: ${efoErr}`);
-                         }
-                     }
-
-                    // Extract risk alleles from this association
-                     assoc.loci?.forEach(locus => {
-                         locus.strongestRiskAlleles?.forEach(riskAllele => {
-                             if (riskAllele.riskAlleleName) {
-                                 const [rsIdPart, allelePart] = riskAllele.riskAlleleName.split('-');
-                                 // Check if it's the correct rsID, though it should be
-                                 if (rsIdPart.trim().toLowerCase() === rsid.toLowerCase() && allelePart && allelePart.trim() !== '?') {
-                                     info.riskAlleles.add(allelePart.trim());
-                                 }
-                             }
-                         });
-                     });
-                 }
-
-                 // If no traits were found via EFO links, try fetching study for diseaseTrait as fallback
-                 if (info.traits.size === 0 && info.studyUrls.size > 0) {
-                      const firstStudyUrl = Array.from(info.studyUrls)[0];
-                      try {
-                          const studyRes = await fetch(firstStudyUrl);
-                          if(studyRes.ok) {
-                              const studyD = await studyRes.json();
-                              if(studyD?.diseaseTrait?.trait) {
-                                  info.traits.add(studyD.diseaseTrait.trait);
-                              }
-                          }
-                      } catch(studyErr){
-                          console.warn(`Could not fetch study for fallback trait: ${studyErr}`);
-                      }
-                 }
-                 // If still no traits, add a placeholder
-                 if(info.traits.size === 0) info.traits.add('Trait Unknown');
-
-
-                 searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${allSnpAssociations.length} trait association(s) for ${rsid}. Checking against your data...</div>`;
-
-                 const matchedSnps = await findRsidsInDB([rsid]); // Check only this rsid
-                 displayKeywordResults(rsid, matchedSnps, [rsid], rsidInfoMap); // Display using the existing function
-
-             } catch (error) {
-                 console.error("Single SNP search error:", error);
-                 searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">An error occurred while searching for ${rsid}: ${error.message}</div>`;
-             }
-         }
-
-
-        // --- Search by Keyword (Trait) ---
-        async function searchByKeyword(keyword) {
-            // This function remains largely the same, but now it's called by handleSearch
-            // if the input is not an rsID.
-            // We pass the keyword parameter directly.
-
-            // setLoadingState(true); // Already set by handleSearch
-            // searchResultsContainer.innerHTML = ... // Already set by handleSearch
-
-            try {
-                // Step 1: Find the EFO (Experimental Factor Ontology) trait for the given keyword.
-                const traitResponse = await fetch(`https://www.ebi.ac.uk/gwas/rest/api/efoTraits/search/findByEfoTrait?trait=${encodeURIComponent(keyword)}`);
-                 if (!traitResponse.ok) {
-                    if (traitResponse.status === 404) {
-                         throw new Error(`API endpoint for traits not found. The service may be unavailable or the URL has changed.`);
-                    }
-                    throw new Error(`API Error (Traits): ${traitResponse.status} ${traitResponse.statusText}`);
-                }
-                const traitData = await traitResponse.json();
-                const efoTraits = traitData._embedded?.efoTraits;
-
-                if (!efoTraits || efoTraits.length === 0) {
-                    searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No genetic traits found for "${keyword}".</div>`;
-                    // setLoadingState(false); // Handled by handleSearch
-                    return;
-                }
-
-                searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${efoTraits.length} related trait(s). Fetching associated SNPs...</div>`;
-
-                // Step 2: For each trait, fetch its associations and map rsIDs to traits and risk alleles.
-                const rsidInfoMap = new Map();
-                const fetchErrors = [];
-                let totalAssociationsFound = 0;
-
-                for (const trait of efoTraits) {
-                    const assocUrl = trait._links?.associations?.href;
-                    if (!assocUrl) continue;
-
-                    try {
-                        let associationsForThisTrait = [];
-                        let nextUrl = assocUrl;
-
-                        while(nextUrl) {
-                            const assocResponse = await fetch(nextUrl);
-                            if (!assocResponse.ok) {
-                                if (assocResponse.status !== 404) {
-                                    fetchErrors.push(`Failed for ${trait.trait}: ${assocResponse.statusText}`);
-                                }
-                                break;
-                            }
-                            const assocData = await assocResponse.json();
-                            if (assocData._embedded?.associations) {
-                                associationsForThisTrait.push(...assocData._embedded.associations);
-                            }
-                            nextUrl = assocData._links?.next?.href;
-                        }
-
-                        totalAssociationsFound += associationsForThisTrait.length;
-
-                        associationsForThisTrait.forEach(assoc => {
-                            const specificTrait = trait.trait; // Use broad trait initially
-                            const studyUrl = assoc._links?.study?.href;
-
-                            const assocInfo = {
-                                riskAlleles: new Set(),
-                                rsids: new Set()
-                            };
-
-                            if (assoc.snps) {
-                                assoc.snps.forEach(snp => {
-                                    if (snp.rsId) {
-                                        const cleanRsId = snp.rsId.split(' ')[0].trim();
-                                        if (cleanRsId) assocInfo.rsids.add(cleanRsId);
-                                    }
-                                });
-                            }
-                            assoc.loci?.forEach(locus => {
-                                locus.strongestRiskAlleles?.forEach(riskAllele => {
-                                    if (riskAllele.riskAlleleName) {
-                                        const [rsIdPart, allelePart] = riskAllele.riskAlleleName.split('-');
-                                        const cleanRsId = rsIdPart.trim();
-                                        if (cleanRsId.startsWith('rs')) {
-                                            assocInfo.rsids.add(cleanRsId);
-                                            if (allelePart && allelePart.trim() !== '?') {
-                                                assocInfo.riskAlleles.add(allelePart.trim());
-                                            }
-                                        }
-                                    }
-                                })
-                            });
-
-                            assocInfo.rsids.forEach(rsid => {
-                                if (!rsidInfoMap.has(rsid)) {
-                                    rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set() });
-                                }
-                                const info = rsidInfoMap.get(rsid);
-                                info.traits.add(specificTrait);
-                                if (studyUrl) info.studyUrls.add(studyUrl);
-                                assocInfo.riskAlleles.forEach(ra => info.riskAlleles.add(ra));
-                            });
-                        });
-
-                    } catch (err) {
-                        fetchErrors.push(`Network error for trait ${trait.trait}: ${err.message}`);
-                    }
-                }
-
-                if (totalAssociationsFound === 0) {
-                     if(fetchErrors.length > 0) {
-                        searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg"><strong class="font-semibold">API Error:</strong> Could not retrieve some genetic associations. The service may be temporarily unavailable. Errors: ${fetchErrors.join(', ')}</div>`;
-                    } else {
-                        searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">While traits for "${keyword}" were found, there are no specific genetic associations listed for them in the GWAS Catalog.</div>`;
-                    }
-                     // setLoadingState(false); // Handled by handleSearch
-                    return;
-                }
-
-                const allAssociatedRsids = Array.from(rsidInfoMap.keys());
-
-                if (allAssociatedRsids.length === 0) {
-                    searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No specific SNPs found for traits related to "${keyword}".</div>`;
-                     // setLoadingState(false); // Handled by handleSearch
-                    return;
-                }
-
-                searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${allAssociatedRsids.length} unique associated SNPs. Checking against your data...</div>`;
-
-                const matchedSnps = await findRsidsInDB(allAssociatedRsids);
-                displayKeywordResults(keyword, matchedSnps, allAssociatedRsids, rsidInfoMap);
-                 // setLoadingState(false); // Handled by handleSearch
-
-            } catch (error) {
-                console.error("Keyword search error:", error);
-                searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">An error occurred: ${error.message}</div>`;
-                 // setLoadingState(false); // Handled by handleSearch
+        while (nextAssocUrl) {
+          try {
+            const assocResponse = await fetch(nextAssocUrl);
+            if (!assocResponse.ok) {
+              if (assocResponse.status !== 404) { // Ignore 404s for associations page
+                fetchErrors.push(`Failed fetching associations: ${assocResponse.statusText}`);
+              }
+              break; // Stop pagination on error
             }
+            const assocData = await assocResponse.json();
+            if (assocData._embedded?.associations) {
+              allSnpAssociations.push(...assocData._embedded.associations);
+            }
+            nextAssocUrl = assocData._links?.next?.href;
+          } catch (err) {
+            fetchErrors.push(`Network error fetching associations: ${err.message}`);
+            break; // Stop on network error
+          }
         }
 
+        if (allSnpAssociations.length === 0) {
+          if (fetchErrors.length > 0) {
+            searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg"><strong class="font-semibold">API Error:</strong> Could not retrieve associations for ${rsid}. Errors: ${fetchErrors.join(', ')}</div>`;
+          } else {
+            searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No associated traits found for SNP ${rsid} in the GWAS Catalog.</div>`;
+          }
+          return;
+        }
 
-        function findRsidsInDB(rsids) {
-            return new Promise((resolve, reject) => {
-                if (!db) return reject("Database not available.");
+        // Build the rsidInfoMap for this single SNP
+        const rsidInfoMap = new Map();
+        rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set() });
+        const info = rsidInfoMap.get(rsid);
 
-                const transaction = db.transaction(['snps'], 'readonly');
-                const store = transaction.objectStore('snps');
-                const matched = [];
-                let checkedCount = 0;
+        for (const assoc of allSnpAssociations) {
+          const studyUrl = assoc._links?.study?.href;
+          if (studyUrl) info.studyUrls.add(studyUrl);
 
-                if (rsids.length === 0) {
-                    resolve([]);
-                    return;
+          // Attempt to get trait from EFO traits linked to the association first
+          const efoTraitsUrl = assoc._links?.efoTraits?.href;
+          if (efoTraitsUrl) {
+            try {
+              const efoResponse = await fetch(efoTraitsUrl);
+              if (efoResponse.ok) {
+                const efoData = await efoResponse.json();
+                efoData._embedded?.efoTraits?.forEach(t => info.traits.add(t.trait));
+              }
+            } catch (efoErr) {
+              console.warn(`Could not fetch EFO traits for association: ${efoErr}`);
+            }
+          }
+
+          // Extract risk alleles from this association
+          assoc.loci?.forEach(locus => {
+            locus.strongestRiskAlleles?.forEach(riskAllele => {
+              if (riskAllele.riskAlleleName) {
+                const [rsIdPart, allelePart] = riskAllele.riskAlleleName.split('-');
+                // Check if it's the correct rsID, though it should be
+                if (rsIdPart.trim().toLowerCase() === rsid.toLowerCase() && allelePart && allelePart.trim() !== '?') {
+                  info.riskAlleles.add(allelePart.trim());
                 }
-
-                rsids.forEach(rsid => {
-                    const request = store.get(rsid);
-                    request.onsuccess = () => {
-                        if (request.result) {
-                            matched.push(request.result);
-                        }
-                        checkedCount++;
-                        if (checkedCount === rsids.length) {
-                            resolve(matched);
-                        }
-                    };
-                    request.onerror = () => {
-                        // Log error but continue
-                        console.error(`Error fetching rsid ${rsid} from DB.`);
-                        checkedCount++;
-                        if (checkedCount === rsids.length) {
-                            resolve(matched);
-                        }
-                    };
-                });
+              }
             });
+          });
         }
 
-        function displayKeywordResults(searchTerm, matchedSnps, allAssociatedRsids, rsidInfoMap) { // Changed 'keyword' to 'searchTerm'
-            const totalAssociated = allAssociatedRsids.length;
-            if (totalAssociated === 0) {
-                 searchResultsContainer.innerHTML = `
+        // If no traits were found via EFO links, try fetching study for diseaseTrait as fallback
+        if (info.traits.size === 0 && info.studyUrls.size > 0) {
+          const firstStudyUrl = Array.from(info.studyUrls)[0];
+          try {
+            const studyRes = await fetch(firstStudyUrl);
+            if (studyRes.ok) {
+              const studyD = await studyRes.json();
+              if (studyD?.diseaseTrait?.trait) {
+                info.traits.add(studyD.diseaseTrait.trait);
+              }
+            }
+          } catch (studyErr) {
+            console.warn(`Could not fetch study for fallback trait: ${studyErr}`);
+          }
+        }
+        // If still no traits, add a placeholder
+        if (info.traits.size === 0) info.traits.add('Trait Unknown');
+
+
+        searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${allSnpAssociations.length} trait association(s) for ${rsid}. Checking against your data...</div>`;
+
+        const matchedSnps = await findRsidsInDB([rsid]); // Check only this rsid
+        displayKeywordResults(rsid, matchedSnps, [rsid], rsidInfoMap); // Display using the existing function
+
+      } catch (error) {
+        console.error("Single SNP search error:", error);
+        searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">An error occurred while searching for ${rsid}: ${error.message}</div>`;
+      }
+    }
+
+
+    // --- Search by Keyword (Trait) ---
+    async function searchByKeyword(keyword) {
+      // This function remains largely the same, but now it's called by handleSearch
+      // if the input is not an rsID.
+      // We pass the keyword parameter directly.
+
+      // setLoadingState(true); // Already set by handleSearch
+      // searchResultsContainer.innerHTML = ... // Already set by handleSearch
+
+      try {
+        // Step 1: Find the EFO (Experimental Factor Ontology) trait for the given keyword.
+        const traitResponse = await fetch(`https://www.ebi.ac.uk/gwas/rest/api/efoTraits/search/findByEfoTrait?trait=${encodeURIComponent(keyword)}`);
+        if (!traitResponse.ok) {
+          if (traitResponse.status === 404) {
+            throw new Error(`API endpoint for traits not found. The service may be unavailable or the URL has changed.`);
+          }
+          throw new Error(`API Error (Traits): ${traitResponse.status} ${traitResponse.statusText}`);
+        }
+        const traitData = await traitResponse.json();
+        const efoTraits = traitData._embedded?.efoTraits;
+
+        if (!efoTraits || efoTraits.length === 0) {
+          searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No genetic traits found for "${keyword}".</div>`;
+          // setLoadingState(false); // Handled by handleSearch
+          return;
+        }
+
+        searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${efoTraits.length} related trait(s). Fetching associated SNPs...</div>`;
+
+        // Step 2: For each trait, fetch its associations and map rsIDs to traits and risk alleles.
+        const rsidInfoMap = new Map();
+        const fetchErrors = [];
+        let totalAssociationsFound = 0;
+
+        for (const trait of efoTraits) {
+          const assocUrl = trait._links?.associations?.href;
+          if (!assocUrl) continue;
+
+          try {
+            let associationsForThisTrait = [];
+            let nextUrl = assocUrl;
+
+            while (nextUrl) {
+              const assocResponse = await fetch(nextUrl);
+              if (!assocResponse.ok) {
+                if (assocResponse.status !== 404) {
+                  fetchErrors.push(`Failed for ${trait.trait}: ${assocResponse.statusText}`);
+                }
+                break;
+              }
+              const assocData = await assocResponse.json();
+              if (assocData._embedded?.associations) {
+                associationsForThisTrait.push(...assocData._embedded.associations);
+              }
+              nextUrl = assocData._links?.next?.href;
+            }
+
+            totalAssociationsFound += associationsForThisTrait.length;
+
+            associationsForThisTrait.forEach(assoc => {
+              const specificTrait = trait.trait; // Use broad trait initially
+              const studyUrl = assoc._links?.study?.href;
+
+              const assocInfo = {
+                riskAlleles: new Set(),
+                rsids: new Set()
+              };
+
+              if (assoc.snps) {
+                assoc.snps.forEach(snp => {
+                  if (snp.rsId) {
+                    const cleanRsId = snp.rsId.split(' ')[0].trim();
+                    if (cleanRsId) assocInfo.rsids.add(cleanRsId);
+                  }
+                });
+              }
+              assoc.loci?.forEach(locus => {
+                locus.strongestRiskAlleles?.forEach(riskAllele => {
+                  if (riskAllele.riskAlleleName) {
+                    const [rsIdPart, allelePart] = riskAllele.riskAlleleName.split('-');
+                    const cleanRsId = rsIdPart.trim();
+                    if (cleanRsId.startsWith('rs')) {
+                      assocInfo.rsids.add(cleanRsId);
+                      if (allelePart && allelePart.trim() !== '?') {
+                        assocInfo.riskAlleles.add(allelePart.trim());
+                      }
+                    }
+                  }
+                })
+              });
+
+              assocInfo.rsids.forEach(rsid => {
+                if (!rsidInfoMap.has(rsid)) {
+                  rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set() });
+                }
+                const info = rsidInfoMap.get(rsid);
+                info.traits.add(specificTrait);
+                if (studyUrl) info.studyUrls.add(studyUrl);
+                assocInfo.riskAlleles.forEach(ra => info.riskAlleles.add(ra));
+              });
+            });
+
+          } catch (err) {
+            fetchErrors.push(`Network error for trait ${trait.trait}: ${err.message}`);
+          }
+        }
+
+        if (totalAssociationsFound === 0) {
+          if (fetchErrors.length > 0) {
+            searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg"><strong class="font-semibold">API Error:</strong> Could not retrieve some genetic associations. The service may be temporarily unavailable. Errors: ${fetchErrors.join(', ')}</div>`;
+          } else {
+            searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">While traits for "${keyword}" were found, there are no specific genetic associations listed for them in the GWAS Catalog.</div>`;
+          }
+          // setLoadingState(false); // Handled by handleSearch
+          return;
+        }
+
+        const allAssociatedRsids = Array.from(rsidInfoMap.keys());
+
+        if (allAssociatedRsids.length === 0) {
+          searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No specific SNPs found for traits related to "${keyword}".</div>`;
+          // setLoadingState(false); // Handled by handleSearch
+          return;
+        }
+
+        searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${allAssociatedRsids.length} unique associated SNPs. Checking against your data...</div>`;
+
+        const matchedSnps = await findRsidsInDB(allAssociatedRsids);
+        displayKeywordResults(keyword, matchedSnps, allAssociatedRsids, rsidInfoMap);
+        // setLoadingState(false); // Handled by handleSearch
+
+      } catch (error) {
+        console.error("Keyword search error:", error);
+        searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">An error occurred: ${error.message}</div>`;
+        // setLoadingState(false); // Handled by handleSearch
+      }
+    }
+
+
+    function findRsidsInDB(rsids) {
+      return new Promise((resolve, reject) => {
+        if (!db) return reject("Database not available.");
+
+        const transaction = db.transaction(['snps'], 'readonly');
+        const store = transaction.objectStore('snps');
+        const matched = [];
+        let checkedCount = 0;
+
+        if (rsids.length === 0) {
+          resolve([]);
+          return;
+        }
+
+        rsids.forEach(rsid => {
+          const request = store.get(rsid);
+          request.onsuccess = () => {
+            if (request.result) {
+              matched.push(request.result);
+            }
+            checkedCount++;
+            if (checkedCount === rsids.length) {
+              resolve(matched);
+            }
+          };
+          request.onerror = () => {
+            // Log error but continue
+            console.error(`Error fetching rsid ${rsid} from DB.`);
+            checkedCount++;
+            if (checkedCount === rsids.length) {
+              resolve(matched);
+            }
+          };
+        });
+      });
+    }
+
+    function displayKeywordResults(searchTerm, matchedSnps, allAssociatedRsids, rsidInfoMap) { // Changed 'keyword' to 'searchTerm'
+      const totalAssociated = allAssociatedRsids.length;
+      if (totalAssociated === 0) {
+        searchResultsContainer.innerHTML = `
                     <div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">
                         <p><strong class="font-semibold">No Results:</strong> No known SNP associations could be found for "${searchTerm}".</p>
                     </div>
                 `;
-                return;
-            }
+        return;
+      }
 
-            const matchedRsidMap = new Map(matchedSnps.map(snp => [snp.rsid, snp]));
+      const matchedRsidMap = new Map(matchedSnps.map(snp => [snp.rsid, snp]));
 
-            const riskIconSVG = {
-                lower: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`,
-                moderate: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.636-1.214 2.27-1.214 2.906 0l4.318 8.216c.36.685.163 1.543-.44 1.998a1.5 1.5 0 01-2.228-.718L11.5 10.428V14a1.5 1.5 0 01-3 0v-3.572l-1.313 2.175a1.5 1.5 0 01-2.228.718c-.603-.455-.8-1.313-.44-1.998l4.318-8.216z" clip-rule="evenodd" /></svg>`,
-                higher: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>`
-            };
+      const riskIconSVG = {
+        lower: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`,
+        moderate: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.636-1.214 2.27-1.214 2.906 0l4.318 8.216c.36.685.163 1.543-.44 1.998a1.5 1.5 0 01-2.228-.718L11.5 10.428V14a1.5 1.5 0 01-3 0v-3.572l-1.313 2.175a1.5 1.5 0 01-2.228.718c-.603-.455-.8-1.313-.44-1.998l4.318-8.216z" clip-rule="evenodd" /></svg>`,
+        higher: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>`
+      };
 
-            const cards = { high: [], lowMed: [], unknown: [], notFound: [] };
-            let highCount = 0, lowMedCount = 0, unknownCount = 0; // Initialize counts
+      const cards = { high: [], lowMed: [], unknown: [], notFound: [] };
+      let highCount = 0, lowMedCount = 0, unknownCount = 0; // Initialize counts
 
-            allAssociatedRsids.sort().forEach(rsid => {
-                const info = rsidInfoMap.get(rsid);
-                const traitsString = info && info.traits ? Array.from(info.traits).slice(0, 3).join(', ') : 'Unknown trait';
-                const studyUrls = info && info.studyUrls ? JSON.stringify(Array.from(info.studyUrls)) : '[]';
-                const riskAlleles = info ? info.riskAlleles : new Set();
-                const riskAlleleString = riskAlleles.size > 0 ? Array.from(riskAlleles).join(', ') : 'N/A';
+      allAssociatedRsids.sort().forEach(rsid => {
+        const info = rsidInfoMap.get(rsid);
+        const traitsString = info && info.traits ? Array.from(info.traits).slice(0, 3).join(', ') : 'Unknown trait';
+        const studyUrls = info && info.studyUrls ? JSON.stringify(Array.from(info.studyUrls)) : '[]';
+        const riskAlleles = info ? info.riskAlleles : new Set();
+        const riskAlleleString = riskAlleles.size > 0 ? Array.from(riskAlleles).join(', ') : 'N/A';
 
-                if (matchedRsidMap.has(rsid)) {
-                    const snp = matchedRsidMap.get(rsid);
+        if (matchedRsidMap.has(rsid)) {
+          const snp = matchedRsidMap.get(rsid);
 
-                    let riskCount = 0;
-                    if (riskAlleles.size > 0) {
-                        if (riskAlleles.has(snp.allele1)) riskCount++;
-                        if (riskAlleles.has(snp.allele2)) riskCount++;
-                    }
+          let riskCount = 0;
+          if (riskAlleles.size > 0) {
+            if (riskAlleles.has(snp.allele1)) riskCount++;
+            if (riskAlleles.has(snp.allele2)) riskCount++;
+          }
 
-                    let riskLevel, riskColor, riskBg, riskBorder, cardHtml;
+          let riskLevel, riskColor, riskBg, riskBorder, cardHtml;
 
-                    if (riskAlleles.size === 0) {
-                         riskLevel = 'Unknown';
-                         riskColor = 'text-gray-700';
-                         riskBg = 'bg-gray-50';
-                         riskBorder = 'border-gray-200';
-                         unknownCount++; // Increment count
-                    } else if (riskCount === 2) {
-                        riskLevel = 'Higher Risk';
-                        riskColor = 'text-red-800';
-                        riskBg = 'bg-red-50';
-                        riskBorder = 'border-red-200';
-                        highCount++; // Increment count
-                    } else if (riskCount === 1) {
-                        riskLevel = 'Moderate Risk';
-                        riskColor = 'text-yellow-800';
-                        riskBg = 'bg-yellow-50';
-                        riskBorder = 'border-yellow-200';
-                        lowMedCount++; // Increment count
-                    } else {
-                        riskLevel = 'Lower Risk';
-                        riskColor = 'text-green-800';
-                        riskBg = 'bg-green-50';
-                        riskBorder = 'border-green-200';
-                        lowMedCount++; // Increment count (grouping Low and Moderate)
-                    }
+          if (riskAlleles.size === 0) {
+            riskLevel = 'Unknown';
+            riskColor = 'text-gray-700';
+            riskBg = 'bg-gray-50';
+            riskBorder = 'border-gray-200';
+            unknownCount++; // Increment count
+          } else if (riskCount === 2) {
+            riskLevel = 'Higher Risk';
+            riskColor = 'text-red-800';
+            riskBg = 'bg-red-50';
+            riskBorder = 'border-red-200';
+            highCount++; // Increment count
+          } else if (riskCount === 1) {
+            riskLevel = 'Moderate Risk';
+            riskColor = 'text-yellow-800';
+            riskBg = 'bg-yellow-50';
+            riskBorder = 'border-yellow-200';
+            lowMedCount++; // Increment count
+          } else {
+            riskLevel = 'Lower Risk';
+            riskColor = 'text-green-800';
+            riskBg = 'bg-green-50';
+            riskBorder = 'border-green-200';
+            lowMedCount++; // Increment count (grouping Low and Moderate)
+          }
 
-                    const icon = riskLevel === 'Higher Risk' ? riskIconSVG.higher : (riskLevel === 'Moderate Risk' ? riskIconSVG.moderate : riskIconSVG.lower);
+          const icon = riskLevel === 'Higher Risk' ? riskIconSVG.higher : (riskLevel === 'Moderate Risk' ? riskIconSVG.moderate : riskIconSVG.lower);
 
-                    cardHtml = `
+          cardHtml = `
                         <div class="${riskBg} ${riskBorder} border p-3 rounded-md shadow-sm needs-study-load" data-study-urls='${studyUrls}'>
                             <details open>
                                 <summary class="font-semibold cursor-pointer ${riskColor} flex justify-between items-center">
@@ -1156,12 +1209,12 @@
                         </div>
                     `;
 
-                    if (riskLevel === 'Higher Risk') cards.high.push(cardHtml);
-                    else if (riskLevel === 'Moderate Risk' || riskLevel === 'Lower Risk') cards.lowMed.push(cardHtml);
-                    else cards.unknown.push(cardHtml);
+          if (riskLevel === 'Higher Risk') cards.high.push(cardHtml);
+          else if (riskLevel === 'Moderate Risk' || riskLevel === 'Lower Risk') cards.lowMed.push(cardHtml);
+          else cards.unknown.push(cardHtml);
 
-                } else {
-                    cards.notFound.push(`
+        } else {
+          cards.notFound.push(`
                         <div class="bg-white border p-3 rounded-md needs-study-load" data-study-urls='${studyUrls}'>
                             <div class="flex justify-between items-center">
                                 <div>
@@ -1174,18 +1227,18 @@
                             </div>
                         </div>
                     `);
-                }
-            });
+        }
+      });
 
-            // Calculate counts for the graph
-            const notFoundCount = totalAssociated - matchedSnps.length; // Correct way to calculate not found
-            const highPerc = totalAssociated > 0 ? (highCount / totalAssociated * 100).toFixed(1) : 0;
-            const lowMedPerc = totalAssociated > 0 ? (lowMedCount / totalAssociated * 100).toFixed(1) : 0;
-            const unknownPerc = totalAssociated > 0 ? (unknownCount / totalAssociated * 100).toFixed(1) : 0;
-            const notFoundPerc = totalAssociated > 0 ? (notFoundCount / totalAssociated * 100).toFixed(1) : 0;
+      // Calculate counts for the graph
+      const notFoundCount = totalAssociated - matchedSnps.length; // Correct way to calculate not found
+      const highPerc = totalAssociated > 0 ? (highCount / totalAssociated * 100).toFixed(1) : 0;
+      const lowMedPerc = totalAssociated > 0 ? (lowMedCount / totalAssociated * 100).toFixed(1) : 0;
+      const unknownPerc = totalAssociated > 0 ? (unknownCount / totalAssociated * 100).toFixed(1) : 0;
+      const notFoundPerc = totalAssociated > 0 ? (notFoundCount / totalAssociated * 100).toFixed(1) : 0;
 
-             // Generate Graph HTML
-            let graphHtml = `
+      // Generate Graph HTML
+      let graphHtml = `
                 <div class="mt-4 mb-2">
                     <p class="text-sm font-medium text-gray-700 mb-1">SNP Distribution for "${searchTerm}":</p>
                     <div class="chart-container">
@@ -1201,7 +1254,7 @@
                 </div>`;
 
 
-            let html = `
+      let html = `
                 <div class="p-5 bg-gray-50 border border-gray-200 rounded-lg">
                     <h3 class="text-lg font-bold text-gray-800">Results for "${searchTerm}"</h3>
                     <p class="text-sm text-gray-600 mt-1">
@@ -1241,276 +1294,276 @@
                 </div>
             `;
 
-            searchResultsContainer.innerHTML = html; // Use the main results container
+      searchResultsContainer.innerHTML = html; // Use the main results container
 
-            // Add tab switching logic
-            const tabButtons = searchResultsContainer.querySelectorAll('.tab-button');
-            const tabPanes = searchResultsContainer.querySelectorAll('.tab-pane');
+      // Add tab switching logic
+      const tabButtons = searchResultsContainer.querySelectorAll('.tab-button');
+      const tabPanes = searchResultsContainer.querySelectorAll('.tab-pane');
 
-            tabButtons.forEach(button => {
-                button.addEventListener('click', () => {
-                    // Deactivate all
-                    tabButtons.forEach(btn => btn.classList.remove('active'));
-                    tabPanes.forEach(pane => pane.classList.add('hidden'));
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          // Deactivate all
+          tabButtons.forEach(btn => btn.classList.remove('active'));
+          tabPanes.forEach(pane => pane.classList.add('hidden'));
 
-                    // Activate clicked
-                    button.classList.add('active');
-                    const targetPaneId = button.dataset.target;
-                    document.getElementById(targetPaneId).classList.remove('hidden');
-                    // Reset scroll position when switching tabs
-                    const scrollContainer = document.getElementById('tab-content-container');
-                    if (scrollContainer) scrollContainer.scrollTop = 0;
+          // Activate clicked
+          button.classList.add('active');
+          const targetPaneId = button.dataset.target;
+          document.getElementById(targetPaneId).classList.remove('hidden');
+          // Reset scroll position when switching tabs
+          const scrollContainer = document.getElementById('tab-content-container');
+          if (scrollContainer) scrollContainer.scrollTop = 0;
 
-                });
-            });
+        });
+      });
 
-            // Set the first tab with results as active
-            const defaultTab = [
-                { id: 'tab-high', count: cards.high.length },
-                { id: 'tab-low-med', count: cards.lowMed.length },
-                { id: 'tab-unknown', count: cards.unknown.length },
-                { id: 'tab-not-found', count: cards.notFound.length }
-            ].find(tab => tab.count > 0);
+      // Set the first tab with results as active
+      const defaultTab = [
+        { id: 'tab-high', count: cards.high.length },
+        { id: 'tab-low-med', count: cards.lowMed.length },
+        { id: 'tab-unknown', count: cards.unknown.length },
+        { id: 'tab-not-found', count: cards.notFound.length }
+      ].find(tab => tab.count > 0);
 
-            if (defaultTab) {
-                 tabButtons.forEach(btn => btn.classList.remove('active'));
-                 tabPanes.forEach(pane => pane.classList.add('hidden'));
+      if (defaultTab) {
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabPanes.forEach(pane => pane.classList.add('hidden'));
 
-                 searchResultsContainer.querySelector(`[data-target="${defaultTab.id}"]`).classList.add('active');
-                 document.getElementById(defaultTab.id).classList.remove('hidden');
-            } else {
-                // Default to first tab if all are empty
-                 if(tabButtons.length > 0){ // Check if buttons exist
-                    tabButtons[0].classList.add('active');
-                    tabPanes[0].classList.remove('hidden');
-                 }
+        searchResultsContainer.querySelector(`[data-target="${defaultTab.id}"]`).classList.add('active');
+        document.getElementById(defaultTab.id).classList.remove('hidden');
+      } else {
+        // Default to first tab if all are empty
+        if (tabButtons.length > 0) { // Check if buttons exist
+          tabButtons[0].classList.add('active');
+          tabPanes[0].classList.remove('hidden');
+        }
+      }
+
+
+      setupLazyLoadObserver();
+    }
+
+    function setupLazyLoadObserver() {
+      const targets = document.querySelectorAll('.needs-study-load');
+      if (!targets.length) return;
+
+      const scrollContainer = document.getElementById('tab-content-container');
+      if (!scrollContainer) return;
+
+      const lazyLoadCallback = async (entries, observer) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const target = entry.target;
+            const traitDisplay = target.querySelector('.trait-display');
+
+            observer.unobserve(target); // Only load once
+
+            const studyUrls = JSON.parse(target.dataset.studyUrls || '[]');
+            if (studyUrls.length === 0 || !traitDisplay) {
+              continue;
             }
 
-
-            setupLazyLoadObserver();
-        }
-
-        function setupLazyLoadObserver() {
-            const targets = document.querySelectorAll('.needs-study-load');
-            if (!targets.length) return;
-
-            const scrollContainer = document.getElementById('tab-content-container');
-            if (!scrollContainer) return;
-
-            const lazyLoadCallback = async (entries, observer) => {
-                for (const entry of entries) {
-                    if (entry.isIntersecting) {
-                        const target = entry.target;
-                        const traitDisplay = target.querySelector('.trait-display');
-
-                        observer.unobserve(target); // Only load once
-
-                        const studyUrls = JSON.parse(target.dataset.studyUrls || '[]');
-                        if (studyUrls.length === 0 || !traitDisplay) {
-                            continue;
-                        }
-
-                        if (!traitDisplay.dataset.loading) {
-                            traitDisplay.dataset.loading = 'true';
-                            const originalText = traitDisplay.textContent;
-                             traitDisplay.innerHTML = `<svg class="animate-spin h-4 w-4 text-gray-500 inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            if (!traitDisplay.dataset.loading) {
+              traitDisplay.dataset.loading = 'true';
+              const originalText = traitDisplay.textContent;
+              traitDisplay.innerHTML = `<svg class="animate-spin h-4 w-4 text-gray-500 inline-block mr-1" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                               </svg> Loading...`;
 
-                            try {
-                                // Fetch only the first study URL for simplicity for now
-                                const studyUrl = studyUrls[0];
-                                const studyResponse = await fetch(studyUrl);
-                                let specificTrait = originalText; // Fallback
-                                if (studyResponse.ok) {
-                                    const studyData = await studyResponse.json();
-                                    specificTrait = studyData?.diseaseTrait?.trait || originalText;
-                                }
-
-                                traitDisplay.textContent = specificTrait;
-
-                            } catch (e) {
-                                console.error("Failed to lazy load study details", e);
-                                traitDisplay.textContent = originalText;
-                            } finally {
-                                delete traitDisplay.dataset.loading;
-                            }
-                        }
-                    }
+              try {
+                // Fetch only the first study URL for simplicity for now
+                const studyUrl = studyUrls[0];
+                const studyResponse = await fetch(studyUrl);
+                let specificTrait = originalText; // Fallback
+                if (studyResponse.ok) {
+                  const studyData = await studyResponse.json();
+                  specificTrait = studyData?.diseaseTrait?.trait || originalText;
                 }
-            };
 
-             // Disconnect previous observer if exists, before creating a new one
-            if (window.lazyLoadObserver) {
-                window.lazyLoadObserver.disconnect();
+                traitDisplay.textContent = specificTrait;
+
+              } catch (e) {
+                console.error("Failed to lazy load study details", e);
+                traitDisplay.textContent = originalText;
+              } finally {
+                delete traitDisplay.dataset.loading;
+              }
             }
-
-            window.lazyLoadObserver = new IntersectionObserver(lazyLoadCallback, {
-                root: scrollContainer,
-                rootMargin: '300px', // Load a bit earlier
-                threshold: 0.01
-            });
-
-            targets.forEach(target => window.lazyLoadObserver.observe(target));
+          }
         }
+      };
 
-        // --- Event Listeners ---
-        fileInput.addEventListener('change', handleFileSelect);
-        // Removed old search button listener
-        mainSearchButton.addEventListener('click', handleSearch); // Use combined handler
-        mainSearchInput.addEventListener('keyup', (event) => { // Use combined handler
-            if (event.key === 'Enter') {
-                handleSearch();
-            }
-        });
-        clearDbButton.addEventListener('click', clearDatabase);
+      // Disconnect previous observer if exists, before creating a new one
+      if (window.lazyLoadObserver) {
+        window.lazyLoadObserver.disconnect();
+      }
+
+      window.lazyLoadObserver = new IntersectionObserver(lazyLoadCallback, {
+        root: scrollContainer,
+        rootMargin: '300px', // Load a bit earlier
+        threshold: 0.01
+      });
+
+      targets.forEach(target => window.lazyLoadObserver.observe(target));
+    }
+
+    // --- Event Listeners ---
+    fileInput.addEventListener('change', handleFileSelect);
+    // Removed old search button listener
+    mainSearchButton.addEventListener('click', handleSearch); // Use combined handler
+    mainSearchInput.addEventListener('keyup', (event) => { // Use combined handler
+      if (event.key === 'Enter') {
+        handleSearch();
+      }
+    });
+    clearDbButton.addEventListener('click', clearDatabase);
 
 
-        // --- Top Traits ---
-        const TRAIT_COLORS = [
-            'bg-blue-100 border-blue-300 text-blue-800',
-            'bg-green-100 border-green-300 text-green-800',
-            'bg-yellow-100 border-yellow-300 text-yellow-800',
-            'bg-purple-100 border-purple-300 text-purple-800',
-            'bg-pink-100 border-pink-300 text-pink-800',
-            'bg-indigo-100 border-indigo-300 text-indigo-800',
-            'bg-red-100 border-red-300 text-red-800',
-            'bg-teal-100 border-teal-300 text-teal-800',
-        ];
+    // --- Top Traits ---
+    const TRAIT_COLORS = [
+      'bg-blue-100 border-blue-300 text-blue-800',
+      'bg-green-100 border-green-300 text-green-800',
+      'bg-yellow-100 border-yellow-300 text-yellow-800',
+      'bg-purple-100 border-purple-300 text-purple-800',
+      'bg-pink-100 border-pink-300 text-pink-800',
+      'bg-indigo-100 border-indigo-300 text-indigo-800',
+      'bg-red-100 border-red-300 text-red-800',
+      'bg-teal-100 border-teal-300 text-teal-800',
+    ];
 
-        // Simple hash function for consistent color assignment
-        function simpleHash(str) {
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                const char = str.charCodeAt(i);
-                hash = ((hash << 5) - hash) + char;
-                hash |= 0; // Convert to 32bit integer
-            }
-            return Math.abs(hash);
+    // Simple hash function for consistent color assignment
+    function simpleHash(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash |= 0; // Convert to 32bit integer
+      }
+      return Math.abs(hash);
+    }
+
+    async function fetchTraits(url) {
+      isFetchingTraits = true; // Set loading flag
+      let fetchErrorOccurred = false; // Flag to track if an error happened
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.status} ${response.statusText}`);
         }
-
-        async function fetchTraits(url) {
-            isFetchingTraits = true; // Set loading flag
-            let fetchErrorOccurred = false; // Flag to track if an error happened
-            try {
-                const response = await fetch(url);
-                if (!response.ok) {
-                    throw new Error(`API Error: ${response.status} ${response.statusText}`);
-                }
-                const data = await response.json();
-                return {
-                    traits: data._embedded?.efoTraits?.map(t => t.trait) || [],
-                    nextUrl: data._links?.next?.href
-                };
-            } catch (error) {
-                fetchErrorOccurred = true; // Set flag on error
-                console.error("Error fetching traits:", error);
-                 if (traitLoadingIndicator) traitLoadingIndicator.innerHTML = `<p class="text-xs text-red-500">Error.</p>`; // Show error in indicator
-                return { traits: [], nextUrl: null, error: error.message };
-            } finally {
-                 isFetchingTraits = false; // Unset loading flag
-                  // Hide indicator only if not already hidden and no error occurred
-                 if (traitLoadingIndicator && !fetchErrorOccurred) {
-                     // Ensure the spinner itself is hidden, not the whole indicator div initially
-                     const spinner = traitLoadingIndicator.querySelector('.spinner');
-                     if(spinner) spinner.classList.add('hidden');
-                     // Optionally hide the whole thing if you prefer
-                      traitLoadingIndicator.classList.add('hidden');
-                 }
-            }
-        }
-
-        function renderTraitButtons(traits) {
-             if (!topTraitsContainer) return;
-
-             // Remove initial "Loading..." text if it exists
-             const initialLoadingText = topTraitsContainer.querySelector('p.italic');
-             if(initialLoadingText) initialLoadingText.remove();
-
-             traits.forEach(trait => {
-                const button = document.createElement('button');
-                button.type = 'button';
-                const colorIndex = simpleHash(trait) % TRAIT_COLORS.length;
-                button.className = `trait-button ${TRAIT_COLORS[colorIndex]}`; // Apply color classes
-                button.textContent = trait;
-                button.dataset.trait = trait;
-                topTraitsContainer.appendChild(button);
-            });
-        }
-
-        async function loadInitialTraits() {
-            if (!topTraitsContainer) return;
-            const initialUrl = `https://www.ebi.ac.uk/gwas/rest/api/efoTraits?size=20`; // Fetch 20 initially
-
-            const { traits, nextUrl: fetchedNextUrl, error } = await fetchTraits(initialUrl);
-            nextTraitUrl = fetchedNextUrl; // Store the next URL globally
-
-            if (error) {
-                topTraitsContainer.innerHTML = `<p class="text-xs text-red-500">Error loading traits: ${error}</p>`;
-                return;
-            }
-
-            if (traits.length > 0) {
-                 const initialLoadingText = topTraitsContainer.querySelector('p.italic');
-                 if(initialLoadingText) topTraitsContainer.innerHTML = ''; // Clear initial loading only if traits found
-                 renderTraitButtons(traits);
-            } else {
-                 topTraitsContainer.innerHTML = '<p class="text-xs text-gray-500">No common traits loaded.</p>';
-            }
-             // Indicator is handled by fetchTraits finally block
-
-            // Add event listener using delegation (only needs to be added once)
-            if (!topTraitsContainer.dataset.listenerAttached) {
-                topTraitsContainer.addEventListener('click', (event) => {
-                    if (event.target.classList.contains('trait-button')) {
-                        const trait = event.target.dataset.trait;
-                        mainSearchInput.value = trait; // Use the main search input
-                        handleSearch(); // Use the main search handler
-                    }
-                });
-                topTraitsContainer.dataset.listenerAttached = 'true';
-            }
-        }
-
-        // Infinite scroll for traits
-        topTraitsContainer.addEventListener('scroll', async () => {
-             if (!nextTraitUrl || isFetchingTraits) return; // Exit if no more pages or already loading
-
-             const { scrollTop, scrollHeight, clientHeight } = topTraitsContainer;
-             // Load when user is near the bottom (e.g., within 50px)
-             const scrollThreshold = 50;
-             if (scrollHeight - scrollTop - clientHeight < scrollThreshold) {
-                 traitLoadingIndicator.classList.remove('hidden'); // Show spinner before fetching
-                 // Make sure spinner element exists before trying to modify it
-                 const spinner = traitLoadingIndicator.querySelector('.spinner');
-                 if(spinner) spinner.classList.remove('hidden'); // Ensure spinner is visible
-
-                 const { traits, nextUrl: fetchedNextUrl, error } = await fetchTraits(nextTraitUrl);
-                 nextTraitUrl = fetchedNextUrl; // Update global next URL
-
-                 if (!error && traits.length > 0) {
-                     renderTraitButtons(traits);
-                 } else if (error) {
-                     console.error("Error loading more traits on scroll:", error);
-                     // Error message is shown inside the indicator by fetchTraits
-                 }
-                 // Let the finally block in fetchTraits handle hiding the indicator
-                 if (!nextTraitUrl) { // No more pages left
-                    traitLoadingIndicator.classList.add('hidden'); // Hide container if no more pages
-                 }
-             }
-        });
-
-
-        // --- Initial Call ---
-        window.onload = () => {
-             init3DBackground(); // Initialize 3D background first
-            initDB();
-            loadInitialTraits(); // Use the new function for initial load
+        const data = await response.json();
+        return {
+          traits: data._embedded?.efoTraits?.map(t => t.trait) || [],
+          nextUrl: data._links?.next?.href
         };
+      } catch (error) {
+        fetchErrorOccurred = true; // Set flag on error
+        console.error("Error fetching traits:", error);
+        if (traitLoadingIndicator) traitLoadingIndicator.innerHTML = `<p class="text-xs text-red-500">Error.</p>`; // Show error in indicator
+        return { traits: [], nextUrl: null, error: error.message };
+      } finally {
+        isFetchingTraits = false; // Unset loading flag
+        // Hide indicator only if not already hidden and no error occurred
+        if (traitLoadingIndicator && !fetchErrorOccurred) {
+          // Ensure the spinner itself is hidden, not the whole indicator div initially
+          const spinner = traitLoadingIndicator.querySelector('.spinner');
+          if (spinner) spinner.classList.add('hidden');
+          // Optionally hide the whole thing if you prefer
+          traitLoadingIndicator.classList.add('hidden');
+        }
+      }
+    }
 
-    </script>
+    function renderTraitButtons(traits) {
+      if (!topTraitsContainer) return;
+
+      // Remove initial "Loading..." text if it exists
+      const initialLoadingText = topTraitsContainer.querySelector('p.italic');
+      if (initialLoadingText) initialLoadingText.remove();
+
+      traits.forEach(trait => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        const colorIndex = simpleHash(trait) % TRAIT_COLORS.length;
+        button.className = `trait-button ${TRAIT_COLORS[colorIndex]}`; // Apply color classes
+        button.textContent = trait;
+        button.dataset.trait = trait;
+        topTraitsContainer.appendChild(button);
+      });
+    }
+
+    async function loadInitialTraits() {
+      if (!topTraitsContainer) return;
+      const initialUrl = `https://www.ebi.ac.uk/gwas/rest/api/efoTraits?size=20`; // Fetch 20 initially
+
+      const { traits, nextUrl: fetchedNextUrl, error } = await fetchTraits(initialUrl);
+      nextTraitUrl = fetchedNextUrl; // Store the next URL globally
+
+      if (error) {
+        topTraitsContainer.innerHTML = `<p class="text-xs text-red-500">Error loading traits: ${error}</p>`;
+        return;
+      }
+
+      if (traits.length > 0) {
+        const initialLoadingText = topTraitsContainer.querySelector('p.italic');
+        if (initialLoadingText) topTraitsContainer.innerHTML = ''; // Clear initial loading only if traits found
+        renderTraitButtons(traits);
+      } else {
+        topTraitsContainer.innerHTML = '<p class="text-xs text-gray-500">No common traits loaded.</p>';
+      }
+      // Indicator is handled by fetchTraits finally block
+
+      // Add event listener using delegation (only needs to be added once)
+      if (!topTraitsContainer.dataset.listenerAttached) {
+        topTraitsContainer.addEventListener('click', (event) => {
+          if (event.target.classList.contains('trait-button')) {
+            const trait = event.target.dataset.trait;
+            mainSearchInput.value = trait; // Use the main search input
+            handleSearch(); // Use the main search handler
+          }
+        });
+        topTraitsContainer.dataset.listenerAttached = 'true';
+      }
+    }
+
+    // Infinite scroll for traits
+    topTraitsContainer.addEventListener('scroll', async () => {
+      if (!nextTraitUrl || isFetchingTraits) return; // Exit if no more pages or already loading
+
+      const { scrollTop, scrollHeight, clientHeight } = topTraitsContainer;
+      // Load when user is near the bottom (e.g., within 50px)
+      const scrollThreshold = 50;
+      if (scrollHeight - scrollTop - clientHeight < scrollThreshold) {
+        traitLoadingIndicator.classList.remove('hidden'); // Show spinner before fetching
+        // Make sure spinner element exists before trying to modify it
+        const spinner = traitLoadingIndicator.querySelector('.spinner');
+        if (spinner) spinner.classList.remove('hidden'); // Ensure spinner is visible
+
+        const { traits, nextUrl: fetchedNextUrl, error } = await fetchTraits(nextTraitUrl);
+        nextTraitUrl = fetchedNextUrl; // Update global next URL
+
+        if (!error && traits.length > 0) {
+          renderTraitButtons(traits);
+        } else if (error) {
+          console.error("Error loading more traits on scroll:", error);
+          // Error message is shown inside the indicator by fetchTraits
+        }
+        // Let the finally block in fetchTraits handle hiding the indicator
+        if (!nextTraitUrl) { // No more pages left
+          traitLoadingIndicator.classList.add('hidden'); // Hide container if no more pages
+        }
+      }
+    });
+
+
+    // --- Initial Call ---
+    window.onload = () => {
+      init3DBackground(); // Initialize 3D background first
+      initDB();
+      loadInitialTraits(); // Use the new function for initial load
+    };
+
+  </script>
 </body>
-</html>
 
+</html>
