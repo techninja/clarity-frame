@@ -33,6 +33,63 @@
       border-radius: 9999px;
       transition: width 0.3s ease-in-out;
     }
+
+    /* Tab styles */
+    .tab-button {
+      padding: 0.75rem 1.25rem;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-weight: 500;
+      color: #6b7280;
+      /* text-gray-500 */
+      white-space: nowrap;
+    }
+
+    .tab-button.active {
+      border-bottom-color: #3b82f6;
+      /* border-blue-600 */
+      color: #3b82f6;
+      /* text-blue-600 */
+    }
+
+    .tab-pane.hidden {
+      display: none;
+    }
+
+    /* Trait button styles */
+    .trait-button {
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      border: 1px solid #d1d5db;
+      /* border-gray-300 */
+      background-color: #f9fafb;
+      /* bg-gray-50 */
+      color: #374151;
+      /* text-gray-700 */
+      font-weight: 500;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .trait-button:hover {
+      background-color: #f3f4f6;
+      /* bg-gray-100 */
+      border-color: #9ca3af;
+      /* border-gray-400 */
+    }
+
+    #load-more-traits {
+      margin-top: 0.75rem;
+      color: #3b82f6;
+      /* text-blue-600 */
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    #load-more-traits:hover {
+      text-decoration: underline;
+    }
   </style>
 </head>
 
@@ -94,6 +151,16 @@
       <h2 class="text-xl font-semibold mb-4">3. Search by Keyword</h2>
       <p class="text-sm text-gray-600 mb-4">Find SNPs in your data associated with a condition or trait (e.g., "heart
         disease"). This uses the public NHGRI-EBI GWAS Catalog.</p>
+
+      <div class="mb-4">
+        <p class="text-sm font-medium text-gray-700 mb-2">Or select a common trait:</p>
+        <div id="top-traits-container" class="flex flex-wrap gap-2">
+          <p class="text-xs text-gray-500 italic">Loading common traits...</p>
+          <!-- Buttons will be injected here by JS -->
+        </div>
+        <button id="load-more-traits" class="hidden">Load More...</button>
+      </div>
+
       <div class="flex flex-col sm:flex-row gap-4">
         <input type="text" id="keyword-search-input" placeholder="e.g., breast cancer"
           class="flex-grow w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
@@ -125,9 +192,12 @@
     const keywordSearchButton = document.getElementById('keyword-search-button');
     const keywordResultsContainer = document.getElementById('keyword-results-container');
     const clearDbButton = document.getElementById('clear-db-button');
+    const topTraitsContainer = document.getElementById('top-traits-container');
+    const loadMoreTraitsButton = document.getElementById('load-more-traits');
 
 
     let db;
+    let nextTraitUrl = null; // Variable to store the URL for the next page of traits
 
     // --- IndexedDB Initialization ---
     function initDB() {
@@ -538,25 +608,17 @@
 
       const matchedRsidMap = new Map(matchedSnps.map(snp => [snp.rsid, snp]));
 
-      let html = `
-                <div class="p-5 bg-gray-50 border border-gray-200 rounded-lg">
-                    <h3 class="text-lg font-bold text-gray-800">Results for "${keyword}"</h3>
-                    <p class="text-sm text-gray-600 mt-1">
-                        Found <strong>${totalAssociated.toLocaleString()}</strong> known SNP(s) associated with this trait.
-                        <span class="font-semibold ${matchedSnps.length > 0 ? 'text-green-700' : 'text-gray-700'}">
-                            ${matchedSnps.length.toLocaleString()}
-                        </span> ${matchedSnps.length === 1 ? 'match was' : 'matches were'} found in your data.
-                    </p>
-                     <div class="mt-3 text-xs text-gray-500 p-2 bg-gray-100 rounded-md">
-                        <strong>Disclaimer:</strong> This is a tool for informational purposes only and is not medical advice. "Risk" is a statistical measure and does not mean you will or will not develop a condition. Consult a healthcare professional for any health concerns.
-                    </div>
-                    <div id="results-scroll-container" class="mt-4 space-y-2 max-h-96 overflow-y-auto pr-2 border-t pt-3">
-            `;
-
       const riskIconSVG = {
         lower: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" /></svg>`,
         moderate: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8.257 3.099c.636-1.214 2.27-1.214 2.906 0l4.318 8.216c.36.685.163 1.543-.44 1.998a1.5 1.5 0 01-2.228-.718L11.5 10.428V14a1.5 1.5 0 01-3 0v-3.572l-1.313 2.175a1.5 1.5 0 01-2.228.718c-.603-.455-.8-1.313-.44-1.998l4.318-8.216z" clip-rule="evenodd" /></svg>`,
         higher: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>`
+      };
+
+      const cards = {
+        high: [],
+        lowMed: [],
+        unknown: [],
+        notFound: []
       };
 
       allAssociatedRsids.sort().forEach(rsid => {
@@ -575,7 +637,8 @@
             if (riskAlleles.has(snp.allele2)) riskCount++;
           }
 
-          let riskLevel, riskColor, riskBg, riskBorder;
+          let riskLevel, riskColor, riskBg, riskBorder, cardHtml;
+
           if (riskAlleles.size === 0) {
             riskLevel = 'Unknown';
             riskColor = 'text-gray-700';
@@ -600,7 +663,7 @@
 
           const icon = riskLevel === 'Higher Risk' ? riskIconSVG.higher : (riskLevel === 'Moderate Risk' ? riskIconSVG.moderate : riskIconSVG.lower);
 
-          html += `
+          cardHtml = `
                         <div class="${riskBg} ${riskBorder} border p-3 rounded-md shadow-sm needs-study-load" data-study-urls='${studyUrls}'>
                             <details open>
                                 <summary class="font-semibold cursor-pointer ${riskColor} flex justify-between items-center">
@@ -622,8 +685,13 @@
                             </details>
                         </div>
                     `;
+
+          if (riskLevel === 'Higher Risk') cards.high.push(cardHtml);
+          else if (riskLevel === 'Moderate Risk' || riskLevel === 'Lower Risk') cards.lowMed.push(cardHtml);
+          else cards.unknown.push(cardHtml);
+
         } else {
-          html += `
+          cards.notFound.push(`
                         <div class="bg-white border p-3 rounded-md needs-study-load" data-study-urls='${studyUrls}'>
                             <div class="flex justify-between items-center">
                                 <div>
@@ -635,12 +703,89 @@
                                 <span class="text-xs font-medium bg-gray-100 text-gray-600 px-2 py-1 rounded-full">Not in your data</span>
                             </div>
                         </div>
-                    `;
+                    `);
         }
       });
 
-      html += `</div></div>`;
+      let html = `
+                <div class="p-5 bg-gray-50 border border-gray-200 rounded-lg">
+                    <h3 class="text-lg font-bold text-gray-800">Results for "${keyword}"</h3>
+                    <p class="text-sm text-gray-600 mt-1">
+                        Found <strong>${totalAssociated.toLocaleString()}</strong> known SNP(s) associated with this trait.
+                        <span class="font-semibold ${matchedSnps.length > 0 ? 'text-green-700' : 'text-gray-700'}">
+                            ${matchedSnps.length.toLocaleString()}
+                        </span> ${matchedSnps.length === 1 ? 'match was' : 'matches were'} found in your data.
+                    </p>
+                     <div class="mt-3 text-xs text-gray-500 p-2 bg-gray-100 rounded-md">
+                        <strong>Disclaimer:</strong> This is a tool for informational purposes only and is not medical advice. "Risk" is a statistical measure and does not mean you will or will not develop a condition. Consult a healthcare professional for any health concerns.
+                    </div>
+
+                    <!-- Tab Headers -->
+                    <div class="mt-4 -mb-px border-b border-gray-200 flex overflow-x-auto">
+                        <button class="tab-button active" data-target="tab-high">High Risk (${cards.high.length})</button>
+                        <button class="tab-button" data-target="tab-low-med">Low-Med Risk (${cards.lowMed.length})</button>
+                        <button class="tab-button" data-target="tab-unknown">Unknown Risk (${cards.unknown.length})</button>
+                        <button class="tab-button" data-target="tab-not-found">Not Found (${cards.notFound.length})</button>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div id="tab-content-container" class="mt-4 space-y-2 max-h-96 overflow-y-auto pr-2 pt-1">
+                    <div id="tab-high" class="tab-pane space-y-2">
+                        ${cards.high.length > 0 ? cards.high.join('') : '<p class="text-sm text-gray-500 p-3">No high-risk SNPs found in your data for this trait.</p>'}
+                    </div>
+                    <div id="tab-low-med" class="tab-pane space-y-2 hidden">
+                        ${cards.lowMed.length > 0 ? cards.lowMed.join('') : '<p class="text-sm text-gray-500 p-3">No low or moderate-risk SNPs found in your data for this trait.</p>'}
+                    </div>
+                    <div id="tab-unknown" class="tab-pane space-y-2 hidden">
+                        ${cards.unknown.length > 0 ? cards.unknown.join('') : '<p class="text-sm text-gray-500 p-3">No unknown-risk SNPs found in your data for this trait.</p>'}
+                    </div>
+                    <div id="tab-not-found" class="tab-pane space-y-2 hidden">
+                        ${cards.notFound.length > 0 ? cards.notFound.join('') : '<p class="text-sm text-gray-500 p-3">No other associated SNPs found.</p>'}
+                    </div>
+                </div>
+            `;
+
       keywordResultsContainer.innerHTML = html;
+
+      // Add tab switching logic
+      const tabButtons = keywordResultsContainer.querySelectorAll('.tab-button');
+      const tabPanes = keywordResultsContainer.querySelectorAll('.tab-pane');
+
+      tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+          // Deactivate all
+          tabButtons.forEach(btn => btn.classList.remove('active'));
+          tabPanes.forEach(pane => pane.classList.add('hidden'));
+
+          // Activate clicked
+          button.classList.add('active');
+          const targetPaneId = button.dataset.target;
+          document.getElementById(targetPaneId).classList.remove('hidden');
+        });
+      });
+
+      // Set the first tab with results as active
+      const defaultTab = [
+        { id: 'tab-high', count: cards.high.length },
+        { id: 'tab-low-med', count: cards.lowMed.length },
+        { id: 'tab-unknown', count: cards.unknown.length },
+        { id: 'tab-not-found', count: cards.notFound.length }
+      ].find(tab => tab.count > 0);
+
+      if (defaultTab) {
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabPanes.forEach(pane => pane.classList.add('hidden'));
+
+        keywordResultsContainer.querySelector(`[data-target="${defaultTab.id}"]`).classList.add('active');
+        document.getElementById(defaultTab.id).classList.remove('hidden');
+      } else {
+        // Default to first tab if all are empty
+        tabButtons[0].classList.add('active');
+        tabPanes[0].classList.remove('hidden');
+      }
+
+
       setupLazyLoadObserver();
     }
 
@@ -648,7 +793,7 @@
       const targets = document.querySelectorAll('.needs-study-load');
       if (!targets.length) return;
 
-      const scrollContainer = document.getElementById('results-scroll-container');
+      const scrollContainer = document.getElementById('tab-content-container');
       if (!scrollContainer) return;
 
       const lazyLoadCallback = async (entries, observer) => {
@@ -724,9 +869,112 @@
     clearDbButton.addEventListener('click', clearDatabase);
 
 
+    // --- Top Traits ---
+    async function fetchTraits(url) {
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`API Error: ${response.status} ${response.statusText}`);
+        }
+        const data = await response.json();
+        return {
+          traits: data._embedded?.efoTraits?.map(t => t.trait) || [],
+          nextUrl: data._links?.next?.href
+        };
+      } catch (error) {
+        console.error("Error fetching traits:", error);
+        return { traits: [], nextUrl: null, error: error.message };
+      }
+    }
+
+    function renderTraitButtons(traits) {
+      if (!topTraitsContainer) return;
+
+      // Remove loading indicator if it's the first load
+      const loadingIndicator = topTraitsContainer.querySelector('p.italic');
+      if (loadingIndicator) loadingIndicator.remove();
+
+      traits.forEach(trait => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'trait-button';
+        button.textContent = trait;
+        button.dataset.trait = trait;
+        topTraitsContainer.appendChild(button);
+      });
+    }
+
+    async function populateTopTraits() {
+      if (!topTraitsContainer) return;
+      const initialUrl = `https://www.ebi.ac.uk/gwas/rest/api/efoTraits?size=10`; // Initial fetch size
+
+      const { traits, nextUrl: fetchedNextUrl, error } = await fetchTraits(initialUrl);
+      nextTraitUrl = fetchedNextUrl; // Store the next URL globally
+
+      if (error) {
+        topTraitsContainer.innerHTML = `<p class="text-xs text-red-500">Error loading traits: ${error}</p>`;
+        return;
+      }
+
+      if (traits.length > 0) {
+        topTraitsContainer.innerHTML = ''; // Clear loading indicator only if traits are found
+        renderTraitButtons(traits);
+        if (nextTraitUrl) {
+          loadMoreTraitsButton.classList.remove('hidden'); // Show load more button
+        } else {
+          loadMoreTraitsButton.classList.add('hidden'); // Hide if no next page
+        }
+      } else {
+        topTraitsContainer.innerHTML = '<p class="text-xs text-gray-500">No common traits loaded.</p>';
+        loadMoreTraitsButton.classList.add('hidden');
+      }
+
+      // Add event listener using delegation (only needs to be added once)
+      if (!topTraitsContainer.dataset.listenerAttached) {
+        topTraitsContainer.addEventListener('click', (event) => {
+          if (event.target.classList.contains('trait-button')) {
+            const trait = event.target.dataset.trait;
+            keywordSearchInput.value = trait;
+            searchByKeyword();
+          }
+        });
+        topTraitsContainer.dataset.listenerAttached = 'true';
+      }
+    }
+
+    // Event listener for the "Load More" button
+    loadMoreTraitsButton.addEventListener('click', async () => {
+      if (!nextTraitUrl) return;
+
+      loadMoreTraitsButton.textContent = 'Loading...';
+      loadMoreTraitsButton.disabled = true;
+
+      const { traits, nextUrl: fetchedNextUrl, error } = await fetchTraits(nextTraitUrl);
+      nextTraitUrl = fetchedNextUrl; // Update the global next URL
+
+      if (error) {
+        // Optionally display an error near the button
+        console.error("Error loading more traits:", error);
+        loadMoreTraitsButton.textContent = 'Error loading. Try again?';
+        loadMoreTraitsButton.disabled = false;
+        return;
+      }
+
+      renderTraitButtons(traits);
+
+      if (nextTraitUrl) {
+        loadMoreTraitsButton.textContent = 'Load More...';
+        loadMoreTraitsButton.disabled = false;
+      } else {
+        loadMoreTraitsButton.classList.add('hidden'); // Hide if no more pages
+      }
+    });
+
+
     // --- Initial Call ---
     window.onload = () => {
       initDB();
+      populateTopTraits();
     };
 
   </script>
