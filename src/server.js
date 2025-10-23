@@ -76,6 +76,10 @@ async function processAndCacheImages() {
 app.use(express.static(path.join(__dirname, 'public')));
 // Serve node_modules for offline dependencies
 app.use('/lib', express.static(path.join(__dirname, '..' , 'node_modules')));
+// Serve WLED stream page
+app.get('/wled', (req, res) => {
+    res.sendFile(path.join(__dirname, 'wled-stream.html'));
+});
 // Serve processed images as PNG at display resolution
 app.get('/photos/:albumPath(*)', async (req, res) => {
     try {
@@ -189,8 +193,15 @@ async function initialize() {
         });
     }
 
+    // Start DDP proxy server
+    spawn(process.execPath, [path.join(__dirname, 'ddp-proxy.js')], {
+        stdio: 'inherit',
+        cwd: process.cwd()
+    });
+
     app.listen(config.port, () => {
         console.log(`Photo frame server running at http://localhost:${config.port}`);
+        console.log(`WLED stream available at http://localhost:${config.port}/wled`);
     });
 }
 

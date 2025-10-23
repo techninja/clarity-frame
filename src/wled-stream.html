@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WLED DDP Stream</title>
+    <style>
+        body { margin: 0; padding: 20px; background: #000; color: #fff; font-family: monospace; }
+        canvas { border: 1px solid #333; cursor: crosshair; }
+        .controls { margin: 10px 0; }
+        input, button { margin: 5px; padding: 5px; }
+    </style>
+</head>
+<body>
+    <h1>WLED DDP Pixel Stream</h1>
+    <div class="controls">
+        <input type="text" id="wledIP" placeholder="WLED IP (192.168.1.100)" value="192.168.1.100">
+        <input type="number" id="ledCount" placeholder="LED Count" value="256" min="1" max="1024">
+        <input type="number" id="width" placeholder="Width" value="16" min="1" max="64">
+        <input type="number" id="height" placeholder="Height" value="16" min="1" max="64">
+        <button onclick="connect()">Connect</button>
+        <button onclick="fetchPixels()">Fetch</button>
+        <button onclick="clear()">Clear</button>
+        <span id="status">Disconnected</span>
+    </div>
+    <canvas id="canvas" width="320" height="320"></canvas>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let ws = null;
+        let wledWs = null;
+        let ledWidth = 16;
+        let ledHeight = 16;
+        let ledCount = 256;
+        let pixelSize = 20;
+
+        async function connect() {
+            const ip = document.getElementById('wledIP').value;
+            localStorage.setItem('wledIP', ip);
+            document.getElementById('status').textContent = 'Connecting...';
+            
+            try {
+                // Fetch WLED info
+                const response = await fetch(`http://${ip}/json/info`);
+                const info = await response.json();
+                
+                ledCount = info.leds.count;
+                ledWidth = info.leds.matrix?.w || Math.ceil(Math.sqrt(ledCount));
+                ledHeight = info.leds.matrix?.h || Math.ceil(ledCount / ledWidth);
+                
+                // Update UI
+                document.getElementById('ledCount').value = ledCount;
+                document.getElementById('width').value = ledWidth;
+                document.getElementById('height').value = ledHeight;
+                
+                canvas.width = ledWidth * pixelSize;
+                canvas.height = ledHeight * pixelSize;
+                
+                // Connect WebSocket
+                ws = new WebSocket(`ws://${window.location.hostname}:3001`);
+                
+                ws.onopen = () => {
+                    console.log('DDP WebSocket connected');
+                    document.getElementById('status').textContent = 'Connected';
+                    ws.send(JSON.stringify({type: 'config', ip, ledCount}));
+                    fetchPixels();
+                };
+                
+                ws.onclose = () => {
+                    console.log('DDP WebSocket disconnected');
+                    document.getElementById('status').textContent = 'Disconnected';
+                };
+                
+                ws.onerror = (error) => {
+                    console.error('DDP WebSocket error:', error);
+                    document.getElementById('status').textContent = 'WebSocket Error';
+                };
+            } catch (error) {
+                document.getElementById('status').textContent = 'Connection failed';
+                console.error('Failed to connect to WLED:', error);
+            }
+        }
+
+        function drawGrid() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            for (let x = 0; x <= ledWidth; x++) {
+                ctx.beginPath();
+                ctx.moveTo(x * pixelSize + 0.5, 0);
+                ctx.lineTo(x * pixelSize + 0.5, canvas.height);
+                ctx.stroke();
+            }
+            for (let y = 0; y <= ledHeight; y++) {
+                ctx.beginPath();
+                ctx.moveTo(0, y * pixelSize + 0.5);
+                ctx.lineTo(canvas.width, y * pixelSize + 0.5);
+                ctx.stroke();
+            }
+        }
+
+        function sendPixelData() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) return;
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const pixels = [];
+            
+            // Send data for all LEDs, not just the grid
+            for (let i = 0; i < ledCount; i++) {
+                const x = i % ledWidth;
+                const y = Math.floor(i / ledWidth);
+                
+                if (x < ledWidth && y < ledHeight) {
+                    const canvasX = x * pixelSize + pixelSize / 2;
+                    const canvasY = y * pixelSize + pixelSize / 2;
+                    const idx = (Math.floor(canvasY) * canvas.width + Math.floor(canvasX)) * 4;
+                    
+                    const r = imageData.data[idx];
+                    const g = imageData.data[idx + 1];
+                    const b = imageData.data[idx + 2];
+                    
+                    pixels.push({ r, g, b });
+                } else {
+                    pixels.push({ r: 0, g: 0, b: 0 });
+                }
+            }
+            
+            // Debug: log first few non-black pixels
+            const coloredPixels = pixels.filter(p => p.r > 0 || p.g > 0 || p.b > 0);
+            console.log(`Sending ${pixels.length} total pixels, ${coloredPixels.length} colored`);
+            
+            ws.send(JSON.stringify({type: 'pixels', data: pixels}));
+        }
+
+        function fetchPixels() {
+            const ip = document.getElementById('wledIP').value;
+            
+            if (wledWs) wledWs.close();
+            
+            wledWs = new WebSocket(`ws://${ip}/ws`);
+            
+            wledWs.onopen = () => {
+                console.log('WLED WebSocket connected');
+                wledWs.send('{"lv":true}'); // Request live view
+            };
+            
+            wledWs.onmessage = async (event) => {
+                try {
+                    if (event.data instanceof Blob) {
+                        const arrayBuffer = await event.data.arrayBuffer();
+                        const data = new Uint8Array(arrayBuffer);
+                        
+                        drawGrid();
+                        // WLED sends header + RGB data, skip first 4 bytes
+                        const offset = 4;
+                        const pixelData = data.slice(offset);
+                        const pixelCount = Math.floor(pixelData.length / 3);
+                        
+                        for (let i = 0; i < Math.min(ledCount, pixelCount); i++) {
+                            const x = i % ledWidth;
+                            const y = Math.floor(i / ledWidth);
+                            const r = pixelData[i * 3];
+                            const g = pixelData[i * 3 + 1];
+                            const b = pixelData[i * 3 + 2];
+                            
+                            if (r > 0 || g > 0 || b > 0) {
+                                ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+                                ctx.fillRect(x * pixelSize + 1, y * pixelSize + 1, pixelSize - 2, pixelSize - 2);
+                            }
+                        }
+                        wledWs.close();
+                    }
+                } catch (e) {
+                    console.error('WLED WebSocket error:', e);
+                }
+            };
+            
+            wledWs.onerror = () => {
+                console.error('WLED WebSocket connection failed');
+                drawGrid();
+            };
+        }
+        
+        function clear() {
+            drawGrid();
+            sendPixelData();
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((e.clientX - rect.left) / pixelSize);
+            const y = Math.floor((e.clientY - rect.top) / pixelSize);
+            
+            if (x >= 0 && x < ledWidth && y >= 0 && y < ledHeight) {
+                const hue = (x + y * ledWidth) / ledCount * 360;
+                ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                ctx.fillRect(x * pixelSize + 1, y * pixelSize + 1, pixelSize - 2, pixelSize - 2);
+                sendPixelData();
+            }
+        });
+
+        // Load saved IP and auto-connect
+        const savedIP = localStorage.getItem('wledIP');
+        if (savedIP) {
+            document.getElementById('wledIP').value = savedIP;
+        }
+        setTimeout(connect, 100);
+    </script>
+</body>
+</html>
