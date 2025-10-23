@@ -70,27 +70,85 @@
         .trait-button {
             padding: 0.375rem 0.75rem;
             border-radius: 9999px;
-            border: 1px solid #d1d5db; /* border-gray-300 */
-            background-color: #f9fafb; /* bg-gray-50 */
-            color: #374151; /* text-gray-700 */
+            /* border: 1px solid #d1d5db; /* border-gray-300 */
+            /* background-color: #f9fafb; /* bg-gray-50 */
+            /* color: #374151; /* text-gray-700 */
             font-weight: 500;
             font-size: 0.875rem;
             cursor: pointer;
             transition: all 0.15s ease-in-out;
+            white-space: nowrap; /* Prevent buttons wrapping text */
+            border-width: 1px; /* Ensure border always takes up space */
         }
         .trait-button:hover {
-            background-color: #f3f4f6; /* bg-gray-100 */
-            border-color: #9ca3af; /* border-gray-400 */
+            opacity: 0.8;
+            /* background-color: #f3f4f6; /* bg-gray-100 */
+            /* border-color: #9ca3af; /* border-gray-400 */
         }
-        #load-more-traits {
-             margin-top: 0.75rem;
-             color: #3b82f6; /* text-blue-600 */
-             font-size: 0.875rem;
-             cursor: pointer;
+        /* Limit height and enable scroll for traits container */
+        #top-traits-container {
+            max-height: 8.5rem; /* Increased height for ~3.5 lines */
+            overflow-y: auto;
+            padding-right: 0.5rem; /* Add some padding for the scrollbar */
+             border: 1px solid transparent; /* Add border to prevent layout shift with scrollbar */
         }
-        #load-more-traits:hover {
-            text-decoration: underline;
+         #trait-loading-indicator {
+             display: flex;
+             justify-content: center;
+             align-items: center;
+             padding: 0.5rem;
+             margin-top: 0.5rem;
+         }
+        .spinner {
+             border: 2px solid rgba(0, 0, 0, 0.1);
+             border-left-color: #3b82f6; /* blue-600 */
+             border-radius: 50%;
+             width: 1rem; /* size-4 */
+             height: 1rem; /* size-4 */
+             animation: spin 1s linear infinite;
+             /* margin-right: 0.5rem; /* mr-2 */ */ Removed margin
+         }
+         @keyframes spin {
+             to { transform: rotate(360deg); }
+         }
+        /* Stacked bar chart styles */
+        .chart-container {
+            display: flex;
+            height: 1.5rem; /* 24px */
+            border-radius: 0.25rem; /* rounded */
+            overflow: hidden;
+            margin-top: 1rem;
+            border: 1px solid #d1d5db; /* border-gray-300 */
         }
+        .chart-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 500;
+             transition: width 0.5s ease-in-out;
+             position: relative; /* For tooltip */
+             color: white; /* Default text color, adjust if needed */
+        }
+         .chart-segment:hover .tooltip {
+            display: block;
+        }
+        .tooltip {
+            display: none;
+            position: absolute;
+            bottom: 110%; /* Position above the segment */
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.75);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            z-index: 10;
+        }
+
     </style>
 </head>
 <body class="text-gray-800 flex items-center justify-center min-h-screen p-4">
@@ -130,24 +188,10 @@
             <p id="progress-text" class="mt-2 text-center text-sm text-gray-600">Starting import...</p>
         </div>
 
-        <!-- Step 3: Data Lookup -->
-        <div id="lookup-card" class="card opacity-50 pointer-events-none">
-             <h2 class="text-xl font-semibold mb-4">2. Lookup SNP by rsID</h2>
-             <div class="flex flex-col sm:flex-row gap-4">
-                <input type="text" id="search-input" placeholder="e.g., rs123456" class="flex-grow w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                <button id="search-button" class="w-full sm:w-auto bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                    Search
-                </button>
-             </div>
-             <div id="results-container" class="mt-6">
-                <!-- Search results will be displayed here -->
-             </div>
-        </div>
-
-        <!-- Step 4: Keyword Search -->
-        <div id="keyword-search-card" class="card opacity-50 pointer-events-none">
-            <h2 class="text-xl font-semibold mb-4">3. Search by Keyword</h2>
-            <p class="text-sm text-gray-600 mb-4">Find SNPs in your data associated with a condition or trait (e.g., "heart disease"). This uses the public NHGRI-EBI GWAS Catalog.</p>
+        <!-- Step 3: Combined Search -->
+        <div id="search-card" class="card opacity-50 pointer-events-none">
+            <h2 class="text-xl font-semibold mb-4">2. Search Traits or rsIDs</h2>
+            <p class="text-sm text-gray-600 mb-4">Enter a keyword (e.g., "heart disease") to find associated SNPs, or enter a specific rsID (e.g., "rs123456"). Uses the public NHGRI-EBI GWAS Catalog.</p>
 
             <div class="mb-4">
                 <p class="text-sm font-medium text-gray-700 mb-2">Or select a common trait:</p>
@@ -155,17 +199,20 @@
                     <p class="text-xs text-gray-500 italic">Loading common traits...</p>
                     <!-- Buttons will be injected here by JS -->
                 </div>
-                 <button id="load-more-traits" class="hidden">Load More...</button>
+                 <!-- Loading indicator for infinite scroll -->
+                 <div id="trait-loading-indicator" class="hidden">
+                     <div class="spinner"></div>
+                 </div>
             </div>
 
             <div class="flex flex-col sm:flex-row gap-4">
-                <input type="text" id="keyword-search-input" placeholder="e.g., breast cancer" class="flex-grow w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                <button id="keyword-search-button" class="w-full sm:w-auto bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                    Search Keyword
+                <input type="text" id="main-search-input" placeholder="Enter keyword or rsID" class="flex-grow w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                <button id="main-search-button" class="w-full sm:w-auto bg-green-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                    Search
                 </button>
             </div>
-            <div id="keyword-results-container" class="mt-6">
-                <!-- Keyword search results will be displayed here -->
+            <div id="search-results-container" class="mt-6">
+                <!-- Search results will be displayed here -->
             </div>
         </div>
     </main>
@@ -178,23 +225,21 @@
         const progressCard = document.getElementById('progress-card');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
-        const lookupCard = document.getElementById('lookup-card');
-        const searchInput = document.getElementById('search-input');
-        const searchButton = document.getElementById('search-button');
-        const resultsContainer = document.getElementById('results-container');
-        const keywordSearchCard = document.getElementById('keyword-search-card');
-        const keywordSearchInput = document.getElementById('keyword-search-input');
-        const keywordSearchButton = document.getElementById('keyword-search-button');
-        const keywordResultsContainer = document.getElementById('keyword-results-container');
+        // Removed lookupCard elements
+        const searchCard = document.getElementById('search-card'); // Renamed from keyword-search-card
+        const mainSearchInput = document.getElementById('main-search-input'); // Renamed from keyword-search-input
+        const mainSearchButton = document.getElementById('main-search-button'); // Renamed from keyword-search-button
+        const searchResultsContainer = document.getElementById('search-results-container'); // Renamed from keyword-results-container
         const clearDbButton = document.getElementById('clear-db-button');
         const topTraitsContainer = document.getElementById('top-traits-container');
-        const loadMoreTraitsButton = document.getElementById('load-more-traits');
+        const traitLoadingIndicator = document.getElementById('trait-loading-indicator');
         const dnaCanvas = document.getElementById('dna-canvas');
 
 
         let db;
         let nextTraitUrl = null; // Variable to store the URL for the next page of traits
         let isLoading = false; // State for DNA animation
+        let isFetchingTraits = false; // Flag to prevent multiple trait fetches
 
         // --- Three.js DNA Background ---
         let scene, camera, renderer, dnaSegments = [], floatingMolecules = [];
@@ -461,11 +506,11 @@
                  // Fade color during loading for molecules (applied to all parts)
                  molecule.children.forEach(child => {
                       if (child.material instanceof THREE.MeshPhongMaterial) {
-                          const currentMatColor = child.material.color;
-                          const finalColor = isLoading ? loadingColor : currentMatColor;
-
+                          // Note: We are lerping the *material's* color directly now
                           if(child.userData.isFloaterPart) {
-                             child.material.color.lerp(targetColor, 0.05); // Lerp towards the global targetColor
+                             // Lerp towards grey normally, lerp towards blue when loading
+                             const moleculeTargetColor = isLoading ? loadingColor : baseColor;
+                             child.material.color.lerp(moleculeTargetColor, 0.05);
                           }
                       }
                  });
@@ -580,10 +625,11 @@
         function activateApp() {
             uploadCard.classList.add('hidden');
             progressCard.classList.add('hidden');
-            lookupCard.classList.remove('opacity-50', 'pointer-events-none');
-            keywordSearchCard.classList.remove('opacity-50', 'pointer-events-none');
+            // lookupCard no longer exists
+            searchCard.classList.remove('opacity-50', 'pointer-events-none'); // Activate the main search card
             clearDbButton.classList.remove('hidden');
-            resultsContainer.innerHTML = '';
+            // resultsContainer no longer exists for direct rsID lookup
+             searchResultsContainer.innerHTML = ''; // Clear main results
              setLoadingState(false); // Ensure loading stops if activating from cache
         }
 
@@ -600,7 +646,7 @@
             };
             request.onerror = (event) => {
                 console.error("Error clearing database:", event.target.error);
-                keywordResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">Error clearing the database.</div>`;
+                searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">Error clearing the database.</div>`;
             };
         }
 
@@ -689,7 +735,7 @@
         function handleImportComplete(totalRecords) {
             activateApp(); // This will also call setLoadingState(false)
             // Show a summary message in the main results area
-            resultsContainer.innerHTML = `
+            searchResultsContainer.innerHTML = `
                 <div class="p-4 bg-green-100 border border-green-200 text-green-800 rounded-lg">
                     <p class="font-semibold">Import Complete!</p>
                     <p>${totalRecords.toLocaleString()} records were successfully imported into the local database.</p>
@@ -697,75 +743,160 @@
             `;
         }
 
-        // --- Data Lookup ---
-        function searchRSID() {
-            const rsidQuery = searchInput.value.trim();
-            if (!rsidQuery || !db) {
-                resultsContainer.innerHTML = `<p class="text-red-500">Please enter an rsID to search.</p>`;
-                return;
-            }
-            // Although quick, we can still indicate loading visually
-            setLoadingState(true);
-            resultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Searching database for ${rsidQuery}...</div>`;
 
-            // Use setTimeout to allow the UI to update before the potentially blocking DB call
-            setTimeout(() => {
-                const transaction = db.transaction(['snps'], 'readonly');
-                const store = transaction.objectStore('snps');
-                const request = store.get(rsidQuery);
+        // --- Combined Search Logic ---
+        async function handleSearch() {
+             const query = mainSearchInput.value.trim();
+             if (!query) {
+                 searchResultsContainer.innerHTML = `<p class="text-red-500">Please enter a keyword or rsID to search.</p>`;
+                 return;
+             }
 
-                request.onsuccess = () => {
-                    const result = request.result;
-                    displayResult(result);
-                     setLoadingState(false);
-                };
+             setLoadingState(true); // Start loading animation
+             searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Searching for "${query}"...</div>`;
 
-                request.onerror = (event) => {
-                    console.error("Lookup error:", event.target.error);
-                    displayResult(null, "An error occurred during lookup.");
-                     setLoadingState(false);
-                };
-            }, 50); // Short delay
+             // Check if it's an rsID
+             const rsIdPattern = /^rs\d+$/i;
+             if (rsIdPattern.test(query)) {
+                 await searchSingleSNP(query);
+             } else {
+                 await searchByKeyword(query);
+             }
+             setLoadingState(false); // Stop loading animation after search completes or errors
         }
 
-        function displayResult(data, errorMsg = '') {
-            if (errorMsg) {
-                 resultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">${errorMsg}</div>`;
-            } else if (data) {
-                resultsContainer.innerHTML = `
-                    <div class="p-5 bg-gray-50 border border-gray-200 rounded-lg">
-                        <h3 class="text-lg font-bold text-blue-700">${data.rsid}</h3>
-                        <div class="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                            <strong class="text-gray-600">Chromosome:</strong>
-                            <span>${data.chromosome}</span>
-                            <strong class="text-gray-600">Position:</strong>
-                            <span>${data.position.toLocaleString()}</span>
-                            <strong class="text-gray-600">Allele 1:</strong>
-                            <span class="font-mono bg-gray-200 px-2 py-1 rounded">${data.allele1}</span>
-                            <strong class="text-gray-600">Allele 2:</strong>
-                            <span class="font-mono bg-gray-200 px-2 py-1 rounded">${data.allele2}</span>
-                        </div>
-                    </div>
-                `;
-            } else {
-                resultsContainer.innerHTML = `
-                    <div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">
-                        <p><strong class="font-semibold">Not Found:</strong> No record found for the provided rsID.</p>
-                    </div>
-                `;
-            }
-        }
+        // --- Search for a single SNP by rsID ---
+        async function searchSingleSNP(rsid) {
+             try {
+                // Fetch SNP details - includes links to associations
+                const snpResponse = await fetch(`https://www.ebi.ac.uk/gwas/rest/api/singleNucleotidePolymorphisms/${rsid}`);
+                 if (!snpResponse.ok) {
+                     if (snpResponse.status === 404) {
+                         throw new Error(`SNP ${rsid} not found in the GWAS Catalog.`);
+                     }
+                     throw new Error(`API Error (SNP): ${snpResponse.status} ${snpResponse.statusText}`);
+                 }
+                 const snpData = await snpResponse.json();
 
-        // --- Keyword Search ---
-        async function searchByKeyword() {
-            const keyword = keywordSearchInput.value.trim();
-            if (!keyword) {
-                keywordResultsContainer.innerHTML = `<p class="text-red-500">Please enter a keyword to search.</p>`;
-                return;
-            }
+                // Get the link to fetch associations for this SNP
+                const assocUrl = snpData._links?.associations?.href;
+                 if (!assocUrl) {
+                    searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No associated traits found for SNP ${rsid} in the GWAS Catalog.</div>`;
+                     return;
+                 }
 
-            setLoadingState(true); // Start loading animation
-            keywordResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Searching for traits related to "${keyword}"...</div>`;
+                 searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found SNP ${rsid}. Fetching associated traits...</div>`;
+
+                // Fetch all associations for this SNP (handling pagination)
+                let allSnpAssociations = [];
+                let nextAssocUrl = assocUrl;
+                 const fetchErrors = [];
+
+                 while (nextAssocUrl) {
+                    try {
+                        const assocResponse = await fetch(nextAssocUrl);
+                        if (!assocResponse.ok) {
+                             if (assocResponse.status !== 404) { // Ignore 404s for associations page
+                                fetchErrors.push(`Failed fetching associations: ${assocResponse.statusText}`);
+                             }
+                            break; // Stop pagination on error
+                        }
+                        const assocData = await assocResponse.json();
+                        if (assocData._embedded?.associations) {
+                            allSnpAssociations.push(...assocData._embedded.associations);
+                        }
+                        nextAssocUrl = assocData._links?.next?.href;
+                    } catch(err) {
+                        fetchErrors.push(`Network error fetching associations: ${err.message}`);
+                        break; // Stop on network error
+                    }
+                 }
+
+                 if (allSnpAssociations.length === 0) {
+                     if (fetchErrors.length > 0) {
+                        searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg"><strong class="font-semibold">API Error:</strong> Could not retrieve associations for ${rsid}. Errors: ${fetchErrors.join(', ')}</div>`;
+                     } else {
+                        searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No associated traits found for SNP ${rsid} in the GWAS Catalog.</div>`;
+                     }
+                     return;
+                 }
+
+                 // Build the rsidInfoMap for this single SNP
+                 const rsidInfoMap = new Map();
+                 rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set() });
+                 const info = rsidInfoMap.get(rsid);
+
+                 for (const assoc of allSnpAssociations) {
+                     const studyUrl = assoc._links?.study?.href;
+                     if (studyUrl) info.studyUrls.add(studyUrl);
+
+                     // Attempt to get trait from EFO traits linked to the association first
+                     const efoTraitsUrl = assoc._links?.efoTraits?.href;
+                     if (efoTraitsUrl) {
+                         try {
+                             const efoResponse = await fetch(efoTraitsUrl);
+                             if (efoResponse.ok) {
+                                 const efoData = await efoResponse.json();
+                                 efoData._embedded?.efoTraits?.forEach(t => info.traits.add(t.trait));
+                             }
+                         } catch (efoErr) {
+                             console.warn(`Could not fetch EFO traits for association: ${efoErr}`);
+                         }
+                     }
+
+                    // Extract risk alleles from this association
+                     assoc.loci?.forEach(locus => {
+                         locus.strongestRiskAlleles?.forEach(riskAllele => {
+                             if (riskAllele.riskAlleleName) {
+                                 const [rsIdPart, allelePart] = riskAllele.riskAlleleName.split('-');
+                                 // Check if it's the correct rsID, though it should be
+                                 if (rsIdPart.trim().toLowerCase() === rsid.toLowerCase() && allelePart && allelePart.trim() !== '?') {
+                                     info.riskAlleles.add(allelePart.trim());
+                                 }
+                             }
+                         });
+                     });
+                 }
+
+                 // If no traits were found via EFO links, try fetching study for diseaseTrait as fallback
+                 if (info.traits.size === 0 && info.studyUrls.size > 0) {
+                      const firstStudyUrl = Array.from(info.studyUrls)[0];
+                      try {
+                          const studyRes = await fetch(firstStudyUrl);
+                          if(studyRes.ok) {
+                              const studyD = await studyRes.json();
+                              if(studyD?.diseaseTrait?.trait) {
+                                  info.traits.add(studyD.diseaseTrait.trait);
+                              }
+                          }
+                      } catch(studyErr){
+                          console.warn(`Could not fetch study for fallback trait: ${studyErr}`);
+                      }
+                 }
+                 // If still no traits, add a placeholder
+                 if(info.traits.size === 0) info.traits.add('Trait Unknown');
+
+
+                 searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${allSnpAssociations.length} trait association(s) for ${rsid}. Checking against your data...</div>`;
+
+                 const matchedSnps = await findRsidsInDB([rsid]); // Check only this rsid
+                 displayKeywordResults(rsid, matchedSnps, [rsid], rsidInfoMap); // Display using the existing function
+
+             } catch (error) {
+                 console.error("Single SNP search error:", error);
+                 searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">An error occurred while searching for ${rsid}: ${error.message}</div>`;
+             }
+         }
+
+
+        // --- Search by Keyword (Trait) ---
+        async function searchByKeyword(keyword) {
+            // This function remains largely the same, but now it's called by handleSearch
+            // if the input is not an rsID.
+            // We pass the keyword parameter directly.
+
+            // setLoadingState(true); // Already set by handleSearch
+            // searchResultsContainer.innerHTML = ... // Already set by handleSearch
 
             try {
                 // Step 1: Find the EFO (Experimental Factor Ontology) trait for the given keyword.
@@ -780,12 +911,12 @@
                 const efoTraits = traitData._embedded?.efoTraits;
 
                 if (!efoTraits || efoTraits.length === 0) {
-                    keywordResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No genetic traits found for "${keyword}".</div>`;
-                     setLoadingState(false);
+                    searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No genetic traits found for "${keyword}".</div>`;
+                    // setLoadingState(false); // Handled by handleSearch
                     return;
                 }
 
-                keywordResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${efoTraits.length} related trait(s). Fetching associated SNPs...</div>`;
+                searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${efoTraits.length} related trait(s). Fetching associated SNPs...</div>`;
 
                 // Step 2: For each trait, fetch its associations and map rsIDs to traits and risk alleles.
                 const rsidInfoMap = new Map();
@@ -867,34 +998,35 @@
 
                 if (totalAssociationsFound === 0) {
                      if(fetchErrors.length > 0) {
-                        keywordResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg"><strong class="font-semibold">API Error:</strong> Could not retrieve some genetic associations. The service may be temporarily unavailable. Errors: ${fetchErrors.join(', ')}</div>`;
+                        searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg"><strong class="font-semibold">API Error:</strong> Could not retrieve some genetic associations. The service may be temporarily unavailable. Errors: ${fetchErrors.join(', ')}</div>`;
                     } else {
-                        keywordResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">While traits for "${keyword}" were found, there are no specific genetic associations listed for them in the GWAS Catalog.</div>`;
+                        searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">While traits for "${keyword}" were found, there are no specific genetic associations listed for them in the GWAS Catalog.</div>`;
                     }
-                     setLoadingState(false);
+                     // setLoadingState(false); // Handled by handleSearch
                     return;
                 }
 
                 const allAssociatedRsids = Array.from(rsidInfoMap.keys());
 
                 if (allAssociatedRsids.length === 0) {
-                    keywordResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No specific SNPs found for traits related to "${keyword}".</div>`;
-                     setLoadingState(false);
+                    searchResultsContainer.innerHTML = `<div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">No specific SNPs found for traits related to "${keyword}".</div>`;
+                     // setLoadingState(false); // Handled by handleSearch
                     return;
                 }
 
-                keywordResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${allAssociatedRsids.length} unique associated SNPs. Checking against your data...</div>`;
+                searchResultsContainer.innerHTML = `<div class="p-4 bg-blue-100 text-blue-800 rounded-lg">Found ${allAssociatedRsids.length} unique associated SNPs. Checking against your data...</div>`;
 
                 const matchedSnps = await findRsidsInDB(allAssociatedRsids);
                 displayKeywordResults(keyword, matchedSnps, allAssociatedRsids, rsidInfoMap);
-                 setLoadingState(false); // Stop loading after results are processed
+                 // setLoadingState(false); // Handled by handleSearch
 
             } catch (error) {
                 console.error("Keyword search error:", error);
-                keywordResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">An error occurred: ${error.message}</div>`;
-                 setLoadingState(false); // Stop loading on error
+                searchResultsContainer.innerHTML = `<div class="p-4 bg-red-100 text-red-800 rounded-lg">An error occurred: ${error.message}</div>`;
+                 // setLoadingState(false); // Handled by handleSearch
             }
         }
+
 
         function findRsidsInDB(rsids) {
             return new Promise((resolve, reject) => {
@@ -933,12 +1065,12 @@
             });
         }
 
-        function displayKeywordResults(keyword, matchedSnps, allAssociatedRsids, rsidInfoMap) {
+        function displayKeywordResults(searchTerm, matchedSnps, allAssociatedRsids, rsidInfoMap) { // Changed 'keyword' to 'searchTerm'
             const totalAssociated = allAssociatedRsids.length;
             if (totalAssociated === 0) {
-                 keywordResultsContainer.innerHTML = `
+                 searchResultsContainer.innerHTML = `
                     <div class="p-4 bg-yellow-100 text-yellow-800 rounded-lg">
-                        <p><strong class="font-semibold">No Results:</strong> No known SNP associations could be found for "${keyword}".</p>
+                        <p><strong class="font-semibold">No Results:</strong> No known SNP associations could be found for "${searchTerm}".</p>
                     </div>
                 `;
                 return;
@@ -952,12 +1084,8 @@
                 higher: `<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>`
             };
 
-            const cards = {
-                high: [],
-                lowMed: [],
-                unknown: [],
-                notFound: []
-            };
+            const cards = { high: [], lowMed: [], unknown: [], notFound: [] };
+            let highCount = 0, lowMedCount = 0, unknownCount = 0; // Initialize counts
 
             allAssociatedRsids.sort().forEach(rsid => {
                 const info = rsidInfoMap.get(rsid);
@@ -982,21 +1110,25 @@
                          riskColor = 'text-gray-700';
                          riskBg = 'bg-gray-50';
                          riskBorder = 'border-gray-200';
+                         unknownCount++; // Increment count
                     } else if (riskCount === 2) {
                         riskLevel = 'Higher Risk';
                         riskColor = 'text-red-800';
                         riskBg = 'bg-red-50';
                         riskBorder = 'border-red-200';
+                        highCount++; // Increment count
                     } else if (riskCount === 1) {
                         riskLevel = 'Moderate Risk';
                         riskColor = 'text-yellow-800';
                         riskBg = 'bg-yellow-50';
                         riskBorder = 'border-yellow-200';
+                        lowMedCount++; // Increment count
                     } else {
                         riskLevel = 'Lower Risk';
                         riskColor = 'text-green-800';
                         riskBg = 'bg-green-50';
                         riskBorder = 'border-green-200';
+                        lowMedCount++; // Increment count (grouping Low and Moderate)
                     }
 
                     const icon = riskLevel === 'Higher Risk' ? riskIconSVG.higher : (riskLevel === 'Moderate Risk' ? riskIconSVG.moderate : riskIconSVG.lower);
@@ -1045,15 +1177,40 @@
                 }
             });
 
+            // Calculate counts for the graph
+            const notFoundCount = totalAssociated - matchedSnps.length; // Correct way to calculate not found
+            const highPerc = totalAssociated > 0 ? (highCount / totalAssociated * 100).toFixed(1) : 0;
+            const lowMedPerc = totalAssociated > 0 ? (lowMedCount / totalAssociated * 100).toFixed(1) : 0;
+            const unknownPerc = totalAssociated > 0 ? (unknownCount / totalAssociated * 100).toFixed(1) : 0;
+            const notFoundPerc = totalAssociated > 0 ? (notFoundCount / totalAssociated * 100).toFixed(1) : 0;
+
+             // Generate Graph HTML
+            let graphHtml = `
+                <div class="mt-4 mb-2">
+                    <p class="text-sm font-medium text-gray-700 mb-1">SNP Distribution for "${searchTerm}":</p>
+                    <div class="chart-container">
+                        ${highCount > 0 ? `<div class="chart-segment bg-red-500" style="width: ${highPerc}%" title="High Risk (Matched): ${highCount}"> <span class="tooltip">High Risk (Matched): ${highCount}</span> </div>` : ''}
+                        ${lowMedCount > 0 ? `<div class="chart-segment bg-yellow-500" style="width: ${lowMedPerc}%" title="Low/Med Risk (Matched): ${lowMedCount}"> <span class="tooltip">Low/Med Risk (Matched): ${lowMedCount}</span> </div>` : ''}
+                        ${unknownCount > 0 ? `<div class="chart-segment bg-gray-500" style="width: ${unknownPerc}%" title="Unknown Risk (Matched): ${unknownCount}"> <span class="tooltip">Unknown Risk (Matched): ${unknownCount}</span> </div>` : ''}
+                        ${notFoundCount > 0 ? `<div class="chart-segment bg-gray-300 text-gray-700" style="width: ${notFoundPerc}%" title="Not Found in Data: ${notFoundCount}"> <span class="tooltip">Not Found in Data: ${notFoundCount}</span> </div>` : ''}
+                    </div>
+                     <div class="flex justify-between text-xs text-gray-600 mt-1 px-1">
+                       <span>Your Matches</span>
+                       <span>Not in Your Data</span>
+                    </div>
+                </div>`;
+
+
             let html = `
                 <div class="p-5 bg-gray-50 border border-gray-200 rounded-lg">
-                    <h3 class="text-lg font-bold text-gray-800">Results for "${keyword}"</h3>
+                    <h3 class="text-lg font-bold text-gray-800">Results for "${searchTerm}"</h3>
                     <p class="text-sm text-gray-600 mt-1">
-                        Found <strong>${totalAssociated.toLocaleString()}</strong> known SNP(s) associated with this trait.
+                        Found <strong>${totalAssociated.toLocaleString()}</strong> known SNP(s) associated with this term.
                         <span class="font-semibold ${matchedSnps.length > 0 ? 'text-green-700' : 'text-gray-700'}">
                             ${matchedSnps.length.toLocaleString()}
                         </span> ${matchedSnps.length === 1 ? 'match was' : 'matches were'} found in your data.
                     </p>
+                    ${graphHtml}
                      <div class="mt-3 text-xs text-gray-500 p-2 bg-gray-100 rounded-md">
                         <strong>Disclaimer:</strong> This is a tool for informational purposes only and is not medical advice. "Risk" is a statistical measure and does not mean you will or will not develop a condition. Consult a healthcare professional for any health concerns.
                     </div>
@@ -1070,13 +1227,13 @@
                 <!-- Tab Content -->
                 <div id="tab-content-container" class="mt-4 space-y-2 max-h-96 overflow-y-auto pr-2 pt-1">
                     <div id="tab-high" class="tab-pane space-y-2">
-                        ${cards.high.length > 0 ? cards.high.join('') : '<p class="text-sm text-gray-500 p-3">No high-risk SNPs found in your data for this trait.</p>'}
+                        ${cards.high.length > 0 ? cards.high.join('') : '<p class="text-sm text-gray-500 p-3">No high-risk SNPs found in your data for this term.</p>'}
                     </div>
                     <div id="tab-low-med" class="tab-pane space-y-2 hidden">
-                        ${cards.lowMed.length > 0 ? cards.lowMed.join('') : '<p class="text-sm text-gray-500 p-3">No low or moderate-risk SNPs found in your data for this trait.</p>'}
+                        ${cards.lowMed.length > 0 ? cards.lowMed.join('') : '<p class="text-sm text-gray-500 p-3">No low or moderate-risk SNPs found in your data for this term.</p>'}
                     </div>
                     <div id="tab-unknown" class="tab-pane space-y-2 hidden">
-                        ${cards.unknown.length > 0 ? cards.unknown.join('') : '<p class="text-sm text-gray-500 p-3">No unknown-risk SNPs found in your data for this trait.</p>'}
+                        ${cards.unknown.length > 0 ? cards.unknown.join('') : '<p class="text-sm text-gray-500 p-3">No unknown-risk SNPs found in your data for this term.</p>'}
                     </div>
                     <div id="tab-not-found" class="tab-pane space-y-2 hidden">
                         ${cards.notFound.length > 0 ? cards.notFound.join('') : '<p class="text-sm text-gray-500 p-3">No other associated SNPs found.</p>'}
@@ -1084,11 +1241,11 @@
                 </div>
             `;
 
-            keywordResultsContainer.innerHTML = html;
+            searchResultsContainer.innerHTML = html; // Use the main results container
 
             // Add tab switching logic
-            const tabButtons = keywordResultsContainer.querySelectorAll('.tab-button');
-            const tabPanes = keywordResultsContainer.querySelectorAll('.tab-pane');
+            const tabButtons = searchResultsContainer.querySelectorAll('.tab-button');
+            const tabPanes = searchResultsContainer.querySelectorAll('.tab-pane');
 
             tabButtons.forEach(button => {
                 button.addEventListener('click', () => {
@@ -1119,12 +1276,14 @@
                  tabButtons.forEach(btn => btn.classList.remove('active'));
                  tabPanes.forEach(pane => pane.classList.add('hidden'));
 
-                 keywordResultsContainer.querySelector(`[data-target="${defaultTab.id}"]`).classList.add('active');
+                 searchResultsContainer.querySelector(`[data-target="${defaultTab.id}"]`).classList.add('active');
                  document.getElementById(defaultTab.id).classList.remove('hidden');
             } else {
                 // Default to first tab if all are empty
-                tabButtons[0].classList.add('active');
-                tabPanes[0].classList.remove('hidden');
+                 if(tabButtons.length > 0){ // Check if buttons exist
+                    tabButtons[0].classList.add('active');
+                    tabPanes[0].classList.remove('hidden');
+                 }
             }
 
 
@@ -1171,27 +1330,6 @@
 
                                 traitDisplay.textContent = specificTrait;
 
-                                // --- OPTIONAL: Fetch all and combine ---
-                                // const studyPromises = studyUrls.map(url =>
-                                //     fetch(url).then(res => res.ok ? res.json() : null).catch(() => null)
-                                // );
-                                // const studyResults = await Promise.all(studyPromises);
-
-                                // const specificTraits = new Set();
-                                // studyResults.forEach(studyData => {
-                                //     if (studyData?.diseaseTrait?.trait) {
-                                //         specificTraits.add(studyData.diseaseTrait.trait);
-                                //     }
-                                // });
-
-                                // if (specificTraits.size > 0) {
-                                //     traitDisplay.textContent = Array.from(specificTraits).join(', ');
-                                // } else {
-                                //     traitDisplay.textContent = originalText;
-                                // }
-                                // --- End Optional ---
-
-
                             } catch (e) {
                                 console.error("Failed to lazy load study details", e);
                                 traitDisplay.textContent = originalText;
@@ -1219,23 +1357,42 @@
 
         // --- Event Listeners ---
         fileInput.addEventListener('change', handleFileSelect);
-        searchButton.addEventListener('click', searchRSID);
-        searchInput.addEventListener('keyup', (event) => {
+        // Removed old search button listener
+        mainSearchButton.addEventListener('click', handleSearch); // Use combined handler
+        mainSearchInput.addEventListener('keyup', (event) => { // Use combined handler
             if (event.key === 'Enter') {
-                searchRSID();
-            }
-        });
-        keywordSearchButton.addEventListener('click', searchByKeyword);
-        keywordSearchInput.addEventListener('keyup', (event) => {
-            if (event.key === 'Enter') {
-                searchByKeyword();
+                handleSearch();
             }
         });
         clearDbButton.addEventListener('click', clearDatabase);
 
 
         // --- Top Traits ---
+        const TRAIT_COLORS = [
+            'bg-blue-100 border-blue-300 text-blue-800',
+            'bg-green-100 border-green-300 text-green-800',
+            'bg-yellow-100 border-yellow-300 text-yellow-800',
+            'bg-purple-100 border-purple-300 text-purple-800',
+            'bg-pink-100 border-pink-300 text-pink-800',
+            'bg-indigo-100 border-indigo-300 text-indigo-800',
+            'bg-red-100 border-red-300 text-red-800',
+            'bg-teal-100 border-teal-300 text-teal-800',
+        ];
+
+        // Simple hash function for consistent color assignment
+        function simpleHash(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash |= 0; // Convert to 32bit integer
+            }
+            return Math.abs(hash);
+        }
+
         async function fetchTraits(url) {
+            isFetchingTraits = true; // Set loading flag
+            let fetchErrorOccurred = false; // Flag to track if an error happened
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
@@ -1247,31 +1404,44 @@
                     nextUrl: data._links?.next?.href
                 };
             } catch (error) {
+                fetchErrorOccurred = true; // Set flag on error
                 console.error("Error fetching traits:", error);
+                 if (traitLoadingIndicator) traitLoadingIndicator.innerHTML = `<p class="text-xs text-red-500">Error.</p>`; // Show error in indicator
                 return { traits: [], nextUrl: null, error: error.message };
+            } finally {
+                 isFetchingTraits = false; // Unset loading flag
+                  // Hide indicator only if not already hidden and no error occurred
+                 if (traitLoadingIndicator && !fetchErrorOccurred) {
+                     // Ensure the spinner itself is hidden, not the whole indicator div initially
+                     const spinner = traitLoadingIndicator.querySelector('.spinner');
+                     if(spinner) spinner.classList.add('hidden');
+                     // Optionally hide the whole thing if you prefer
+                      traitLoadingIndicator.classList.add('hidden');
+                 }
             }
         }
 
         function renderTraitButtons(traits) {
              if (!topTraitsContainer) return;
 
-             // Remove loading indicator if it's the first load and only if it exists
-             const loadingIndicator = topTraitsContainer.querySelector('p.italic');
-             if(loadingIndicator) loadingIndicator.remove();
+             // Remove initial "Loading..." text if it exists
+             const initialLoadingText = topTraitsContainer.querySelector('p.italic');
+             if(initialLoadingText) initialLoadingText.remove();
 
              traits.forEach(trait => {
                 const button = document.createElement('button');
                 button.type = 'button';
-                button.className = 'trait-button';
+                const colorIndex = simpleHash(trait) % TRAIT_COLORS.length;
+                button.className = `trait-button ${TRAIT_COLORS[colorIndex]}`; // Apply color classes
                 button.textContent = trait;
                 button.dataset.trait = trait;
                 topTraitsContainer.appendChild(button);
             });
         }
 
-        async function populateTopTraits() {
+        async function loadInitialTraits() {
             if (!topTraitsContainer) return;
-            const initialUrl = `https://www.ebi.ac.uk/gwas/rest/api/efoTraits?size=10`; // Initial fetch size
+            const initialUrl = `https://www.ebi.ac.uk/gwas/rest/api/efoTraits?size=20`; // Fetch 20 initially
 
             const { traits, nextUrl: fetchedNextUrl, error } = await fetchTraits(initialUrl);
             nextTraitUrl = fetchedNextUrl; // Store the next URL globally
@@ -1282,60 +1452,54 @@
             }
 
             if (traits.length > 0) {
-                 // Clear loading indicator only if it exists
-                 const loadingIndicator = topTraitsContainer.querySelector('p.italic');
-                 if(loadingIndicator) topTraitsContainer.innerHTML = '';
-
+                 const initialLoadingText = topTraitsContainer.querySelector('p.italic');
+                 if(initialLoadingText) topTraitsContainer.innerHTML = ''; // Clear initial loading only if traits found
                  renderTraitButtons(traits);
-                if (nextTraitUrl) {
-                    loadMoreTraitsButton.classList.remove('hidden'); // Show load more button
-                } else {
-                    loadMoreTraitsButton.classList.add('hidden'); // Hide if no next page
-                }
             } else {
                  topTraitsContainer.innerHTML = '<p class="text-xs text-gray-500">No common traits loaded.</p>';
-                 loadMoreTraitsButton.classList.add('hidden');
             }
+             // Indicator is handled by fetchTraits finally block
 
             // Add event listener using delegation (only needs to be added once)
             if (!topTraitsContainer.dataset.listenerAttached) {
                 topTraitsContainer.addEventListener('click', (event) => {
                     if (event.target.classList.contains('trait-button')) {
                         const trait = event.target.dataset.trait;
-                        keywordSearchInput.value = trait;
-                        searchByKeyword();
+                        mainSearchInput.value = trait; // Use the main search input
+                        handleSearch(); // Use the main search handler
                     }
                 });
                 topTraitsContainer.dataset.listenerAttached = 'true';
             }
         }
 
-        // Event listener for the "Load More" button
-        loadMoreTraitsButton.addEventListener('click', async () => {
-            if (!nextTraitUrl) return;
+        // Infinite scroll for traits
+        topTraitsContainer.addEventListener('scroll', async () => {
+             if (!nextTraitUrl || isFetchingTraits) return; // Exit if no more pages or already loading
 
-            loadMoreTraitsButton.textContent = 'Loading...';
-            loadMoreTraitsButton.disabled = true;
+             const { scrollTop, scrollHeight, clientHeight } = topTraitsContainer;
+             // Load when user is near the bottom (e.g., within 50px)
+             const scrollThreshold = 50;
+             if (scrollHeight - scrollTop - clientHeight < scrollThreshold) {
+                 traitLoadingIndicator.classList.remove('hidden'); // Show spinner before fetching
+                 // Make sure spinner element exists before trying to modify it
+                 const spinner = traitLoadingIndicator.querySelector('.spinner');
+                 if(spinner) spinner.classList.remove('hidden'); // Ensure spinner is visible
 
-            const { traits, nextUrl: fetchedNextUrl, error } = await fetchTraits(nextTraitUrl);
-             nextTraitUrl = fetchedNextUrl; // Update the global next URL
+                 const { traits, nextUrl: fetchedNextUrl, error } = await fetchTraits(nextTraitUrl);
+                 nextTraitUrl = fetchedNextUrl; // Update global next URL
 
-            if (error) {
-                 // Optionally display an error near the button
-                 console.error("Error loading more traits:", error);
-                 loadMoreTraitsButton.textContent = 'Error loading. Try again?';
-                 loadMoreTraitsButton.disabled = false;
-                 return;
-            }
-
-            renderTraitButtons(traits);
-
-            if (nextTraitUrl) {
-                 loadMoreTraitsButton.textContent = 'Load More...';
-                 loadMoreTraitsButton.disabled = false;
-            } else {
-                loadMoreTraitsButton.classList.add('hidden'); // Hide if no more pages
-            }
+                 if (!error && traits.length > 0) {
+                     renderTraitButtons(traits);
+                 } else if (error) {
+                     console.error("Error loading more traits on scroll:", error);
+                     // Error message is shown inside the indicator by fetchTraits
+                 }
+                 // Let the finally block in fetchTraits handle hiding the indicator
+                 if (!nextTraitUrl) { // No more pages left
+                    traitLoadingIndicator.classList.add('hidden'); // Hide container if no more pages
+                 }
+             }
         });
 
 
@@ -1343,7 +1507,7 @@
         window.onload = () => {
              init3DBackground(); // Initialize 3D background first
             initDB();
-            populateTopTraits();
+            loadInitialTraits(); // Use the new function for initial load
         };
 
     </script>
