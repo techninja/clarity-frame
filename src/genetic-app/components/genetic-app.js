@@ -278,7 +278,14 @@ export class GeneticApp extends LitElement {
       } else {
         this.searchProgress = { step: 'Searching traits', detail: 'Querying GWAS Catalog' };
         const [result] = await Promise.all([
-          this.gwasApi.searchByTrait(query),
+          this.gwasApi.searchByTrait(query, (current, total, step) => {
+            if (typeof step === 'string' && (step.includes('%') || step.includes('MB'))) {
+              this.searchProgress = { step: 'Downloading data', detail: step };
+            } else {
+              this.searchProgress = { step: step, detail: '' };
+            }
+            this.requestUpdate();
+          }, 1000),
           new Promise(resolve => setTimeout(resolve, 800))
         ]);
         rsidInfoMap = result;
@@ -296,7 +303,8 @@ export class GeneticApp extends LitElement {
         query,
         rsidInfoMap,
         matchedSnps,
-        totalAssociated: allRsids.length
+        totalAssociated: allRsids.length,
+        isLimited: allRsids.length >= 1000
       };
     } catch (error) {
       console.error('Search failed:', error);

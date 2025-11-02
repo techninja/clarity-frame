@@ -33,6 +33,58 @@ export class GWASApi {
   }
 
   /**
+   * Fetch with download progress tracking
+   * @param {string} url
+   * @param {Function} progressCallback - Called with (loaded, total)
+   * @returns {Promise<Response>}
+   */
+  async _fetchWithProgress(url, progressCallback) {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`API Error: ${response.status} ${response.statusText}`);
+    }
+
+    const contentLength = response.headers.get('content-length');
+    const total = contentLength ? parseInt(contentLength, 10) : 0;
+    
+    if (!response.body) {
+      return response;
+    }
+
+    let loaded = 0;
+    const reader = response.body.getReader();
+    const chunks = [];
+    const startTime = Date.now();
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      
+      chunks.push(value);
+      loaded += value.length;
+      
+      // Always use fallback display since server doesn't provide content-length
+      const elapsed = (Date.now() - startTime) / 1000;
+      const rate = loaded / elapsed / 1024 / 1024; // MB/s
+      const minutes = Math.floor(elapsed / 60);
+      const seconds = Math.floor(elapsed % 60);
+      const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+      const progressStr = `${(loaded/1024/1024).toFixed(1)}MB • ${rate.toFixed(1)}MB/s • ${timeStr}`;
+      progressCallback?.(loaded, loaded, progressStr);
+    }
+
+    const blob = new Blob(chunks);
+    const text = await blob.text();
+    
+    return {
+      ok: response.ok,
+      status: response.status,
+      headers: response.headers,
+      json: () => Promise.resolve(JSON.parse(text))
+    };
+  }
+
+  /**
    * Search for SNP by rsID
    * @param {string} rsid
    * @returns {Promise<Map<string, TraitInfo>>}
@@ -58,11 +110,13 @@ export class GWASApi {
   }
 
   /**
-   * Search for SNPs by trait keyword
+   * Search for SNPs by trait keyword with progress tracking
    * @param {string} keyword
+   * @param {Function} progressCallback - Called with (current, total, step)
+   * @param {number} maxResults - Maximum results to return (default 1000)
    * @returns {Promise<Map<string, TraitInfo>>}
    */
-  async searchByTrait(keyword) {
+  async searchByTrait(keyword, progressCallback = null, maxResults = 1000) {
     const traitResponse = await fetch(
       `${this.baseUrl}/efoTraits/search/findByEfoTrait?trait=${encodeURIComponent(keyword)}`
     );
@@ -79,17 +133,43 @@ export class GWASApi {
     }
 
     const rsidInfoMap = new Map();
+    const totalTraits = efoTraits.length;
 
-    for (const trait of efoTraits) {
+    const queryStartTime = Date.now();
+    let timerInterval;
+    
+    if (progressCallback) {
+      timerInterval = setInterval(() => {
+        const elapsed = (Date.now() - queryStartTime) / 1000;
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = Math.floor(elapsed % 60);
+        const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        progressCallback(1, totalTraits, `Querying... [${timeStr}]`);
+      }, 1000);
+    }
+    
+    for (let i = 0; i < efoTraits.length; i++) {
+      const trait = efoTraits[i];
+      
       const assocUrl = trait._links?.associations?.href;
       if (!assocUrl) continue;
 
       try {
-        const associations = await this._fetchAllAssociations(assocUrl);
+        const associations = await this._fetchAllAssociations(
+          assocUrl, 
+          maxResults - rsidInfoMap.size,
+          (loaded, total, progressStr) => {
+            if (progressStr) {
+              progressCallback?.(i + 1, totalTraits, progressStr);
+            }
+          }
+        );
         const traitMap = await this._processAssociations(associations, null, trait.trait);
         
         // Merge into main map
         for (const [rsid, info] of traitMap) {
+          if (rsidInfoMap.size >= maxResults) break;
+          
           if (!rsidInfoMap.has(rsid)) {
             rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set() });
           }
@@ -98,33 +178,49 @@ export class GWASApi {
           info.riskAlleles.forEach(r => existing.riskAlleles.add(r));
           info.studyUrls.forEach(s => existing.studyUrls.add(s));
         }
+        
+        if (rsidInfoMap.size >= maxResults) break;
       } catch (error) {
         console.warn(`Error processing trait ${trait.trait}:`, error);
       }
+    }
+
+    if (timerInterval) {
+      clearInterval(timerInterval);
     }
 
     return rsidInfoMap;
   }
 
   /**
-   * Fetch all associations with pagination
+   * Fetch associations with pagination and limits
    * @param {string} url
+   * @param {number} maxResults - Maximum results to fetch
+   * @param {Function} downloadProgressCallback - Called with (loaded, total) for download progress
    * @returns {Promise<Array>}
    */
-  async _fetchAllAssociations(url) {
+  async _fetchAllAssociations(url, maxResults = 1000, downloadProgressCallback = null) {
     const associations = [];
     let nextUrl = url;
+    let pageCount = 0;
+    const maxPages = 10; // Limit API calls
 
-    while (nextUrl) {
+    while (nextUrl && associations.length < maxResults && pageCount < maxPages) {
       try {
-        const response = await fetch(nextUrl);
+        const response = downloadProgressCallback ? 
+          await this._fetchWithProgress(nextUrl, downloadProgressCallback) :
+          await fetch(nextUrl);
+          
         if (!response.ok) break;
         
         const data = await response.json();
         if (data._embedded?.associations) {
-          associations.push(...data._embedded.associations);
+          const remaining = maxResults - associations.length;
+          const toAdd = data._embedded.associations.slice(0, remaining);
+          associations.push(...toAdd);
         }
         nextUrl = data._links?.next?.href;
+        pageCount++;
       } catch (error) {
         console.warn('Error fetching associations:', error);
         break;

@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import './dna-loader.js';
+import './lazy-results.js';
 
 export class ResultsDisplay extends LitElement {
   static styles = css`
@@ -138,25 +139,27 @@ export class ResultsDisplay extends LitElement {
 
     .tab-content {
       flex: 1;
-      overflow-y: auto;
+      overflow: hidden;
       min-height: 0;
     }
 
     .tab-pane {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 0.5rem;
-      padding: 1rem;
-    }
-
-    @media (min-width: 768px) {
-      .tab-pane {
-        grid-template-columns: 1fr 1fr;
-      }
+      height: 100%;
+      display: block;
     }
 
     .tab-pane.hidden {
       display: none;
+    }
+
+    .limit-warning {
+      background-color: #fef3c7;
+      border: 1px solid #f59e0b;
+      border-radius: 0.375rem;
+      padding: 0.75rem;
+      margin: 0.75rem 1rem;
+      font-size: 0.875rem;
+      color: #92400e;
     }
 
     .snp-card {
@@ -653,40 +656,52 @@ export class ResultsDisplay extends LitElement {
           </div>
         </div>
 
+        ${processedResults.isLimited ? html`
+          <div class="limit-warning">
+            <strong>Results Limited:</strong> Showing first 1,000 associations to prevent performance issues. 
+            Try a more specific search term for complete results.
+          </div>
+        ` : ''}
+
         <div class="tab-content">
           <div class="tab-pane ${this.activeTab === 'high' ? '' : 'hidden'}">
-            ${categories.high.length > 0 ?
-              categories.high.map(item => this._renderSnpCard(item, 'high')) :
-              html`<div class="empty-state">No high-risk SNPs found in your data for this term.</div>`
-            }
+            <lazy-results
+              .items=${categories.high}
+              category="high-risk"
+              .renderItem=${(item, cat) => this._renderSnpCard(item, 'high')}
+            ></lazy-results>
           </div>
 
           <div class="tab-pane ${this.activeTab === 'moderate' ? '' : 'hidden'}">
-            ${categories.moderate.length > 0 ?
-              categories.moderate.map(item => this._renderSnpCard(item, 'moderate')) :
-              html`<div class="empty-state">No moderate-risk SNPs found in your data for this term.</div>`
-            }
+            <lazy-results
+              .items=${categories.moderate}
+              category="moderate-risk"
+              .renderItem=${(item, cat) => this._renderSnpCard(item, 'moderate')}
+            ></lazy-results>
           </div>
 
           <div class="tab-pane ${this.activeTab === 'low' ? '' : 'hidden'}">
-            ${categories.low.length > 0 ?
-              categories.low.map(item => this._renderSnpCard(item, 'low')) :
-              html`<div class="empty-state">No low-risk SNPs found in your data for this term.</div>`
-            }
+            <lazy-results
+              .items=${categories.low}
+              category="low-risk"
+              .renderItem=${(item, cat) => this._renderSnpCard(item, 'low')}
+            ></lazy-results>
           </div>
 
           <div class="tab-pane ${this.activeTab === 'unknown' ? '' : 'hidden'}">
-            ${categories.unknown.length > 0 ?
-              categories.unknown.map(item => this._renderSnpCard(item, 'unknown')) :
-              html`<div class="empty-state">No unknown-risk SNPs found in your data for this term.</div>`
-            }
+            <lazy-results
+              .items=${categories.unknown}
+              category="unknown-risk"
+              .renderItem=${(item, cat) => this._renderSnpCard(item, 'unknown')}
+            ></lazy-results>
           </div>
 
           <div class="tab-pane ${this.activeTab === 'notFound' ? '' : 'hidden'}">
-            ${categories.notFound.length > 0 ?
-              categories.notFound.map(item => this._renderSnpCard(item, 'notFound')) :
-              html`<div class="empty-state">No other associated SNPs found.</div>`
-            }
+            <lazy-results
+              .items=${categories.notFound}
+              category="not-found"
+              .renderItem=${(item, cat) => this._renderSnpCard(item, 'notFound')}
+            ></lazy-results>
           </div>
         </div>
       </div>
