@@ -249,6 +249,71 @@ export class LazyResults extends LitElement {
       font-size: 0.625rem;
       color: #9ca3af;
     }
+
+    .study-title {
+      display: block;
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+      cursor: pointer;
+      line-height: 1.4;
+    }
+
+    .study-title.truncated {
+      max-height: 2.8em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      text-overflow: ellipsis;
+    }
+
+    .study-title.expanded {
+      max-height: 20em;
+      display: block;
+    }
+
+    .study-title.clickable:hover {
+      color: #3b82f6;
+    }
+
+    .gene-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
+
+    .gene-links {
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+      line-height: 1.4;
+    }
+
+    .gene-links.truncated {
+      max-height: 2.8em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .gene-links.expanded {
+      max-height: 15em;
+      display: block;
+    }
+
+    .gene-chevron {
+      cursor: pointer;
+      color: #6b7280;
+      font-size: 0.75rem;
+      transition: transform 0.2s ease;
+      margin-top: 0.1rem;
+    }
+
+    .gene-chevron:hover {
+      color: #3b82f6;
+    }
+
+    .gene-chevron.expanded {
+      transform: rotate(180deg);
+    }
   `;
 
   static properties = {
@@ -267,6 +332,8 @@ export class LazyResults extends LitElement {
     this.batchSize = 20;
     this.visibleCount = 20;
     this.loading = false;
+    this.expandedTitles = new Set();
+    this.expandedGenes = new Set();
   }
 
   firstUpdated() {
@@ -343,9 +410,16 @@ export class LazyResults extends LitElement {
     const cachedTitle = this.studyTitles.get(studyUrl);
     
     if (cachedTitle && cachedTitle !== 'loading...') {
+      const isLong = cachedTitle.length > 80;
+      const titleId = `title-${studyUrl.split('/').pop()}`;
+      const isExpanded = this.expandedTitles.has(titleId);
+      
       return html`
         <span class="detail-label">Study:</span>
-        <span class="study-title">${cachedTitle}</span>
+        <span class="study-title ${isLong ? (isExpanded ? 'expanded clickable' : 'truncated clickable') : ''}" 
+              @click="${isLong ? () => this._toggleStudyText(titleId) : null}">
+          ${cachedTitle}
+        </span>
       `;
     }
     
@@ -353,6 +427,48 @@ export class LazyResults extends LitElement {
     return html`
       <span class="study-placeholder" data-study-url="${studyUrl}"></span>
     `;
+  }
+
+  _toggleStudyText(titleId) {
+    if (this.expandedTitles.has(titleId)) {
+      this.expandedTitles.delete(titleId);
+    } else {
+      this.expandedTitles.add(titleId);
+    }
+    this.requestUpdate();
+  }
+
+  _renderGenes(item) {
+    if (!item.genes?.length) return '';
+    
+    const geneText = item.genes.join(', ');
+    const isLong = geneText.length > 60;
+    const geneId = `genes-${item.rsid}`;
+    const isExpanded = this.expandedGenes.has(geneId);
+    
+    return html`
+      <span class="detail-label">Genes:</span>
+      <div class="gene-container">
+        <span class="gene-links ${isLong ? (isExpanded ? 'expanded' : 'truncated') : ''}">
+          ${item.genes.map((gene, i) => html`${i > 0 ? ', ' : ''}<a href="https://www.ncbi.nlm.nih.gov/gene/?term=${encodeURIComponent(gene)}" target="_blank" class="external-link">${gene}</a>`)}
+        </span>
+        ${isLong ? html`
+          <span class="gene-chevron ${isExpanded ? 'expanded' : ''}" 
+                @click="${() => this._toggleGenes(geneId)}">
+            ▼
+          </span>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  _toggleGenes(geneId) {
+    if (this.expandedGenes.has(geneId)) {
+      this.expandedGenes.delete(geneId);
+    } else {
+      this.expandedGenes.add(geneId);
+    }
+    this.requestUpdate();
   }
 
   async _fetchStudyTitle(studyUrl) {
@@ -430,12 +546,7 @@ export class LazyResults extends LitElement {
                 </span>
               ` : ''}
 
-              ${item.genes?.length ? html`
-                <span class="detail-label">Genes:</span>
-                <span class="gene-links">
-                  ${item.genes.map((gene, i) => html`${i > 0 ? ', ' : ''}<a href="https://www.ncbi.nlm.nih.gov/gene/?term=${encodeURIComponent(gene)}" target="_blank" class="external-link">${gene}</a>`)}
-                </span>
-              ` : ''}
+              ${this._renderGenes(item)}
 
               ${this._renderStudyTitle(item)}
 
@@ -447,12 +558,7 @@ export class LazyResults extends LitElement {
               <span class="detail-label">Risk Allele(s):</span>
               <span class="allele-display">${item.riskAlleles}</span>
 
-              ${item.genes?.length ? html`
-                <span class="detail-label">Genes:</span>
-                <span class="gene-links">
-                  ${item.genes.map((gene, i) => html`${i > 0 ? ', ' : ''}<a href="https://www.ncbi.nlm.nih.gov/gene/?term=${encodeURIComponent(gene)}" target="_blank" class="external-link">${gene}</a>`)}
-                </span>
-              ` : ''}
+              ${this._renderGenes(item)}
 
               ${this._renderStudyTitle(item)}
 
