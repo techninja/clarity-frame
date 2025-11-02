@@ -285,7 +285,7 @@ export class GWASApi {
       if (traitName) {
         traits.add(traitName);
       } else {
-        // Try to get from EFO traits
+        // Get traits from EFO
         const efoTraitsUrl = assoc._links?.efoTraits?.href;
         if (efoTraitsUrl) {
           try {

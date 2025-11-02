@@ -271,11 +271,39 @@ export class LazyResults extends LitElement {
 
   firstUpdated() {
     this.addEventListener('scroll', this._handleScroll.bind(this));
+    this._setupIntersectionObserver();
+  }
+
+  _setupIntersectionObserver() {
+    this.observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const studyUrl = entry.target.dataset.studyUrl;
+          if (studyUrl && !this.studyTitles?.has(studyUrl)) {
+            this._fetchStudyTitle(studyUrl);
+          }
+        }
+      });
+    }, { threshold: 0.1 });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this.observer) {
+      this.observer.disconnect();
+    }
   }
 
   updated(changedProperties) {
     if (changedProperties.has('items')) {
       this.visibleCount = Math.min(this.batchSize, this.items.length);
+    }
+    
+    // Observe new study placeholders
+    if (this.observer) {
+      this.shadowRoot.querySelectorAll('.study-placeholder[data-study-url]').forEach(el => {
+        this.observer.observe(el);
+      });
     }
   }
 
@@ -302,6 +330,55 @@ export class LazyResults extends LitElement {
       this.loading = false;
       this.requestUpdate();
     }, 100);
+  }
+
+  _renderStudyTitle(item) {
+    if (!item.studyUrls?.length) return '';
+    
+    if (!this.studyTitles) {
+      this.studyTitles = new Map();
+    }
+    
+    const studyUrl = Array.from(item.studyUrls)[0];
+    const cachedTitle = this.studyTitles.get(studyUrl);
+    
+    if (cachedTitle && cachedTitle !== 'loading...') {
+      return html`
+        <span class="detail-label">Study:</span>
+        <span class="study-title">${cachedTitle}</span>
+      `;
+    }
+    
+    // Return placeholder that will trigger lazy loading when visible
+    return html`
+      <span class="study-placeholder" data-study-url="${studyUrl}"></span>
+    `;
+  }
+
+  async _fetchStudyTitle(studyUrl) {
+    if (this.studyTitles.has(studyUrl)) return;
+    
+    // Mark as loading to prevent duplicate requests
+    this.studyTitles.set(studyUrl, 'loading...');
+    
+    try {
+      const response = await fetch(studyUrl);
+      if (response.ok) {
+        const studyData = await response.json();
+        const title = studyData?.publicationInfo?.title;
+        if (title) {
+          this.studyTitles.set(studyUrl, title);
+          this.requestUpdate();
+        } else {
+          this.studyTitles.delete(studyUrl);
+        }
+      } else {
+        this.studyTitles.delete(studyUrl);
+      }
+    } catch (error) {
+      console.warn('Could not fetch study title:', error);
+      this.studyTitles.delete(studyUrl);
+    }
   }
 
 
@@ -352,6 +429,8 @@ export class LazyResults extends LitElement {
                 </span>
               ` : ''}
 
+              ${this._renderStudyTitle(item)}
+
               <span class="detail-label">More Info:</span>
               <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">dbSNP</a>
             </div>
@@ -366,6 +445,8 @@ export class LazyResults extends LitElement {
                   ${item.genes.map((gene, i) => html`${i > 0 ? ', ' : ''}<a href="https://www.ncbi.nlm.nih.gov/gene/?term=${encodeURIComponent(gene)}" target="_blank" class="external-link">${gene}</a>`)}
                 </span>
               ` : ''}
+
+              ${this._renderStudyTitle(item)}
 
               <span class="detail-label">More Info:</span>
               <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">dbSNP</a>
