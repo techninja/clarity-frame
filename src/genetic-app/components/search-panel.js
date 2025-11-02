@@ -141,26 +141,27 @@ export class SearchPanel extends LitElement {
       flex-wrap: wrap;
       gap: 0.5rem;
       border: 1px solid transparent;
+      position: relative;
     }
 
     @media (min-width: 768px) {
       .traits-container {
-        max-height: 5rem;
+        max-height: 8rem;
       }
     }
 
-
-
-    .loading-indicator {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 0.5rem;
-      margin-top: 0.5rem;
-    }
-
-    .loading-indicator.hidden {
-      display: none;
+    .loading-button {
+      padding: 0.375rem 0.75rem;
+      border-radius: 9999px;
+      font-weight: 500;
+      font-size: 0.875rem;
+      background-color: #f3f4f6;
+      color: #6b7280;
+      border: 1px solid #d1d5db;
+      cursor: not-allowed;
+      opacity: 0.7;
+      white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .spinner {
@@ -400,10 +401,12 @@ export class SearchPanel extends LitElement {
                   ></trait-button>
                 `;
               })}
-            </div>
-            
-            <div class="loading-indicator ${this.loadingTraits ? '' : 'hidden'}">
-              <div class="spinner"></div>
+              
+              ${this.loadingTraits && this.traits.length > 0 ? html`
+                <button class="loading-button" disabled>
+                  Loading more... ⏳
+                </button>
+              ` : ''}
             </div>
           </div>
         </div>
