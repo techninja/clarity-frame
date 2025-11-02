@@ -141,11 +141,13 @@ export class ResultsDisplay extends LitElement {
       flex: 1;
       overflow: hidden;
       min-height: 0;
+      position: relative;
     }
 
     .tab-pane {
       height: 100%;
       display: block;
+      overflow: hidden;
     }
 
     .tab-pane.hidden {
@@ -334,6 +336,84 @@ export class ResultsDisplay extends LitElement {
     .content-wrapper.fade-in {
       opacity: 1;
     }
+
+    .chromosome-viz {
+      margin: -0.75rem -0.75rem 0.75rem -0.75rem;
+      padding: 0.75rem;
+      background: #f8fafc;
+      border-radius: 0.375rem 0.375rem 0 0;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .chr-label {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+
+    .chr-icon {
+      flex-shrink: 0;
+    }
+
+    .chr-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .chr-bar {
+      flex: 1;
+      height: 1rem;
+      background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+      border-radius: 0.5rem;
+      opacity: 0.4;
+      position: relative;
+    }
+
+    .position-marker {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 0.5rem;
+      height: 0.5rem;
+      background: #ef4444;
+      border: 2px solid white;
+      border-radius: 50%;
+    }
+
+    .alleles {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .allele {
+      width: 1.5rem;
+      height: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.625rem;
+      font-weight: 600;
+      color: white;
+      border-radius: 0.125rem;
+    }
+
+    .allele.risk {
+      background: #ef4444;
+    }
+
+    .allele.safe {
+      background: #22c55e;
+    }
+
+    .position-label {
+      font-size: 0.625rem;
+      color: #9ca3af;
+    }
   `;
 
   static properties = {
@@ -451,6 +531,8 @@ export class ResultsDisplay extends LitElement {
     if (tabContent) tabContent.scrollTop = 0;
   }
 
+
+
   _renderChart(processedResults) {
     if (!processedResults?.counts) return '';
 
@@ -500,56 +582,7 @@ export class ResultsDisplay extends LitElement {
     `;
   }
 
-  _renderSnpCard(item, category) {
-    const isMatched = category !== 'notFound';
-    const riskClass = category === 'high' ? 'high-risk' :
-                     category === 'moderate' ? 'moderate-risk' :
-                     category === 'low' ? 'low-risk' :
-                     category === 'unknown' ? 'unknown-risk' : 'not-found';
 
-    return html`
-      <div class="snp-card ${riskClass}">
-        <details open>
-          <summary class="snp-header ${riskClass}">
-            <span>${item.rsid}</span>
-            <span class="match-badge ${isMatched ? 'found' : 'not-found'}">
-              ${isMatched ? 'MATCH FOUND' : 'Not in your data'}
-            </span>
-          </summary>
-
-          ${isMatched ? html`
-            <div class="snp-details">
-              <span class="detail-label">Associated Trait(s):</span>
-              <span>${item.traits}</span>
-
-              <span class="detail-label">Risk Allele(s):</span>
-              <span class="allele-display">${item.riskAlleles}</span>
-
-              <span class="detail-label">Your Alleles:</span>
-              <span class="allele-display">${item.snp.allele1} / ${item.snp.allele2}</span>
-
-              <span class="detail-label">Risk Level:</span>
-              <span class="risk-level ${riskClass}">${item.riskLevel}</span>
-
-              <span class="detail-label">More Info:</span>
-              <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">dbSNP</a>
-            </div>
-          ` : html`
-            <div class="snp-details">
-              <span class="detail-label">Associated Trait(s):</span>
-              <span>${item.traits}</span>
-
-              <span class="detail-label">Risk Allele(s):</span>
-              <span class="allele-display">${item.riskAlleles}</span>
-
-              <span class="detail-label">More Info:</span>
-              <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">dbSNP</a>
-            </div>
-          `}
-        </details>
-      </div>
-    `;
-  }
 
   render() {
     // Debug: Force loading state
@@ -667,40 +700,35 @@ export class ResultsDisplay extends LitElement {
           <div class="tab-pane ${this.activeTab === 'high' ? '' : 'hidden'}">
             <lazy-results
               .items=${categories.high}
-              category="high-risk"
-              .renderItem=${(item, cat) => this._renderSnpCard(item, 'high')}
+              category="high"
             ></lazy-results>
           </div>
 
           <div class="tab-pane ${this.activeTab === 'moderate' ? '' : 'hidden'}">
             <lazy-results
               .items=${categories.moderate}
-              category="moderate-risk"
-              .renderItem=${(item, cat) => this._renderSnpCard(item, 'moderate')}
+              category="moderate"
             ></lazy-results>
           </div>
 
           <div class="tab-pane ${this.activeTab === 'low' ? '' : 'hidden'}">
             <lazy-results
               .items=${categories.low}
-              category="low-risk"
-              .renderItem=${(item, cat) => this._renderSnpCard(item, 'low')}
+              category="low"
             ></lazy-results>
           </div>
 
           <div class="tab-pane ${this.activeTab === 'unknown' ? '' : 'hidden'}">
             <lazy-results
               .items=${categories.unknown}
-              category="unknown-risk"
-              .renderItem=${(item, cat) => this._renderSnpCard(item, 'unknown')}
+              category="unknown"
             ></lazy-results>
           </div>
 
           <div class="tab-pane ${this.activeTab === 'notFound' ? '' : 'hidden'}">
             <lazy-results
               .items=${categories.notFound}
-              category="not-found"
-              .renderItem=${(item, cat) => this._renderSnpCard(item, 'notFound')}
+              category="notFound"
             ></lazy-results>
           </div>
         </div>
