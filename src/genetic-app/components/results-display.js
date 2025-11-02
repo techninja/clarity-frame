@@ -68,6 +68,26 @@ export class ResultsDisplay extends LitElement {
       color: white;
     }
 
+    /* New: centered hover label for each segment */
+    .segment-label {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 0.75rem;
+      font-weight: 700;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease-in-out, transform 0.15s ease-in-out;
+      white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    }
+
+    .chart-segment:hover .segment-label {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1.02);
+    }
+
     .chart-labels {
       display: flex;
       justify-content: space-between;
@@ -342,7 +362,7 @@ export class ResultsDisplay extends LitElement {
     if (changedProperties.has('results') && this.results) {
       this._setDefaultActiveTab();
     }
-    
+
     if (changedProperties.has('loading')) {
       if (this.loading) {
         this.showLoader = true;
@@ -371,7 +391,7 @@ export class ResultsDisplay extends LitElement {
       if (snp) {
         const riskLevel = this._calculateRiskLevel(snp, riskAlleles);
         const category = riskLevel.toLowerCase().replace(' risk', '').replace(' ', '');
-        
+
         categories[category].push({
           rsid,
           snp,
@@ -404,11 +424,11 @@ export class ResultsDisplay extends LitElement {
 
   _calculateRiskLevel(snp, riskAlleles) {
     if (riskAlleles.length === 0) return 'Unknown';
-    
+
     let riskCount = 0;
     if (riskAlleles.includes(snp.allele1)) riskCount++;
     if (riskAlleles.includes(snp.allele2)) riskCount++;
-    
+
     if (riskCount === 2) return 'High Risk';
     if (riskCount === 1) return 'Moderate Risk';
     return 'Low Risk';
@@ -416,7 +436,7 @@ export class ResultsDisplay extends LitElement {
 
   _setDefaultActiveTab() {
     if (!this.results?.counts) return;
-    
+
     const tabOrder = ['high', 'moderate', 'low', 'unknown', 'notFound'];
     this.activeTab = tabOrder.find(tab => this.results.counts[tab] > 0) || 'high';
   }
@@ -430,34 +450,44 @@ export class ResultsDisplay extends LitElement {
 
   _renderChart(processedResults) {
     if (!processedResults?.counts) return '';
-    
+
     const { counts, totalAssociated } = processedResults;
     const total = totalAssociated;
-    
+
     if (total === 0) return '';
-    
+
     const highPerc = (counts.high / total * 100).toFixed(1);
     const modPerc = (counts.moderate / total * 100).toFixed(1);
     const lowPerc = (counts.low / total * 100).toFixed(1);
     const unknownPerc = (counts.unknown / total * 100).toFixed(1);
     const notFoundPerc = (counts.notFound / total * 100).toFixed(1);
-    
+
     return html`
       <div class="chart-container">
         ${counts.high > 0 ? html`
-          <div class="chart-segment" style="width: ${highPerc}%; background-color: #ef4444;" title="High Risk: ${counts.high}"></div>
+          <div class="chart-segment" style="width: ${highPerc}%; background-color: #ef4444;" title="High Risk: ${counts.high}">
+            <span class="segment-label">${Math.round(highPerc)}%</span>
+          </div>
         ` : ''}
         ${counts.moderate > 0 ? html`
-          <div class="chart-segment" style="width: ${modPerc}%; background-color: #eab308;" title="Moderate Risk: ${counts.moderate}"></div>
+          <div class="chart-segment" style="width: ${modPerc}%; background-color: #eab308;" title="Moderate Risk: ${counts.moderate}">
+            <span class="segment-label">${Math.round(modPerc)}%</span>
+          </div>
         ` : ''}
         ${counts.low > 0 ? html`
-          <div class="chart-segment" style="width: ${lowPerc}%; background-color: #22c55e;" title="Low Risk: ${counts.low}"></div>
+          <div class="chart-segment" style="width: ${lowPerc}%; background-color: #22c55e;" title="Low Risk: ${counts.low}">
+            <span class="segment-label">${Math.round(lowPerc)}%</span>
+          </div>
         ` : ''}
         ${counts.unknown > 0 ? html`
-          <div class="chart-segment" style="width: ${unknownPerc}%; background-color: #6b7280;" title="Unknown Risk: ${counts.unknown}"></div>
+          <div class="chart-segment" style="width: ${unknownPerc}%; background-color: #6b7280;" title="Unknown Risk: ${counts.unknown}">
+            <span class="segment-label">${Math.round(unknownPerc)}%</span>
+          </div>
         ` : ''}
         ${counts.notFound > 0 ? html`
-          <div class="chart-segment" style="width: ${notFoundPerc}%; background-color: #d1d5db; color: #374151;" title="Not Found: ${counts.notFound}"></div>
+          <div class="chart-segment" style="width: ${notFoundPerc}%; background-color: #d1d5db; color: #374151;" title="Not Found: ${counts.notFound}">
+            <span class="segment-label">${Math.round(notFoundPerc)}%</span>
+          </div>
         ` : ''}
       </div>
       <div class="chart-labels">
@@ -469,11 +499,11 @@ export class ResultsDisplay extends LitElement {
 
   _renderSnpCard(item, category) {
     const isMatched = category !== 'notFound';
-    const riskClass = category === 'high' ? 'high-risk' : 
+    const riskClass = category === 'high' ? 'high-risk' :
                      category === 'moderate' ? 'moderate-risk' :
                      category === 'low' ? 'low-risk' :
                      category === 'unknown' ? 'unknown-risk' : 'not-found';
-    
+
     return html`
       <div class="snp-card ${riskClass}">
         <details open>
@@ -483,21 +513,21 @@ export class ResultsDisplay extends LitElement {
               ${isMatched ? 'MATCH FOUND' : 'Not in your data'}
             </span>
           </summary>
-          
+
           ${isMatched ? html`
             <div class="snp-details">
               <span class="detail-label">Associated Trait(s):</span>
               <span>${item.traits}</span>
-              
+
               <span class="detail-label">Risk Allele(s):</span>
               <span class="allele-display">${item.riskAlleles}</span>
-              
+
               <span class="detail-label">Your Alleles:</span>
               <span class="allele-display">${item.snp.allele1} / ${item.snp.allele2}</span>
-              
+
               <span class="detail-label">Risk Level:</span>
               <span class="risk-level ${riskClass}">${item.riskLevel}</span>
-              
+
               <span class="detail-label">More Info:</span>
               <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">dbSNP</a>
             </div>
@@ -505,10 +535,10 @@ export class ResultsDisplay extends LitElement {
             <div class="snp-details">
               <span class="detail-label">Associated Trait(s):</span>
               <span>${item.traits}</span>
-              
+
               <span class="detail-label">Risk Allele(s):</span>
               <span class="allele-display">${item.riskAlleles}</span>
-              
+
               <span class="detail-label">More Info:</span>
               <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">dbSNP</a>
             </div>
@@ -528,7 +558,7 @@ export class ResultsDisplay extends LitElement {
         ></dna-loader>
       `;
     }
-    
+
     // Show error state
     if (this.error && !this.loading) {
       return html`
@@ -552,7 +582,7 @@ export class ResultsDisplay extends LitElement {
     // Process results if available
     const processedResults = this.results ? this._processResults(this.results) : null;
     const hasResults = processedResults && !this.error;
-    
+
     let content = html``;
     if (hasResults) {
       const { query, categories, counts, totalAssociated, totalMatched } = processedResults;
@@ -562,7 +592,7 @@ export class ResultsDisplay extends LitElement {
     return html`
       <div class="content-wrapper ${hasResults ? 'fade-in' : ''}">
         ${content}
-        
+
         ${this.showLoader ? html`
           <div class="loader-overlay ${!this.loading ? 'fade-out' : ''}">
             <dna-loader
@@ -578,7 +608,7 @@ export class ResultsDisplay extends LitElement {
   _renderResults(query, categories, counts, totalAssociated, totalMatched) {
 
     const processedResults = { query, categories, counts, totalAssociated, totalMatched };
-    
+
     return html`
       <div class="results-container">
         <div class="results-header-section">
@@ -594,29 +624,29 @@ export class ResultsDisplay extends LitElement {
           ${this._renderChart(processedResults)}
 
           <div class="disclaimer">
-            <strong>Disclaimer:</strong> This is a tool for informational purposes only and is not medical advice. 
-            "Risk" is a statistical measure and does not mean you will or will not develop a condition. 
+            <strong>Disclaimer:</strong> This is a tool for informational purposes only and is not medical advice.
+            "Risk" is a statistical measure and does not mean you will or will not develop a condition.
             Consult a healthcare professional for any health concerns.
           </div>
 
           <div class="tabs">
-          <button class="tab-button ${this.activeTab === 'high' ? 'active' : ''}" 
+          <button class="tab-button ${this.activeTab === 'high' ? 'active' : ''}"
                   @click=${() => this._switchTab('high')}>
             High Risk (${counts.high})
           </button>
-          <button class="tab-button ${this.activeTab === 'moderate' ? 'active' : ''}" 
+          <button class="tab-button ${this.activeTab === 'moderate' ? 'active' : ''}"
                   @click=${() => this._switchTab('moderate')}>
             Moderate Risk (${counts.moderate})
           </button>
-          <button class="tab-button ${this.activeTab === 'low' ? 'active' : ''}" 
+          <button class="tab-button ${this.activeTab === 'low' ? 'active' : ''}"
                   @click=${() => this._switchTab('low')}>
             Low Risk (${counts.low})
           </button>
-          <button class="tab-button ${this.activeTab === 'unknown' ? 'active' : ''}" 
+          <button class="tab-button ${this.activeTab === 'unknown' ? 'active' : ''}"
                   @click=${() => this._switchTab('unknown')}>
             Unknown Risk (${counts.unknown})
           </button>
-          <button class="tab-button ${this.activeTab === 'notFound' ? 'active' : ''}" 
+          <button class="tab-button ${this.activeTab === 'notFound' ? 'active' : ''}"
                   @click=${() => this._switchTab('notFound')}>
             Not Found (${counts.notFound})
           </button>
@@ -625,35 +655,35 @@ export class ResultsDisplay extends LitElement {
 
         <div class="tab-content">
           <div class="tab-pane ${this.activeTab === 'high' ? '' : 'hidden'}">
-            ${categories.high.length > 0 ? 
+            ${categories.high.length > 0 ?
               categories.high.map(item => this._renderSnpCard(item, 'high')) :
               html`<div class="empty-state">No high-risk SNPs found in your data for this term.</div>`
             }
           </div>
-          
+
           <div class="tab-pane ${this.activeTab === 'moderate' ? '' : 'hidden'}">
-            ${categories.moderate.length > 0 ? 
+            ${categories.moderate.length > 0 ?
               categories.moderate.map(item => this._renderSnpCard(item, 'moderate')) :
               html`<div class="empty-state">No moderate-risk SNPs found in your data for this term.</div>`
             }
           </div>
-          
+
           <div class="tab-pane ${this.activeTab === 'low' ? '' : 'hidden'}">
-            ${categories.low.length > 0 ? 
+            ${categories.low.length > 0 ?
               categories.low.map(item => this._renderSnpCard(item, 'low')) :
               html`<div class="empty-state">No low-risk SNPs found in your data for this term.</div>`
             }
           </div>
-          
+
           <div class="tab-pane ${this.activeTab === 'unknown' ? '' : 'hidden'}">
-            ${categories.unknown.length > 0 ? 
+            ${categories.unknown.length > 0 ?
               categories.unknown.map(item => this._renderSnpCard(item, 'unknown')) :
               html`<div class="empty-state">No unknown-risk SNPs found in your data for this term.</div>`
             }
           </div>
-          
+
           <div class="tab-pane ${this.activeTab === 'notFound' ? '' : 'hidden'}">
-            ${categories.notFound.length > 0 ? 
+            ${categories.notFound.length > 0 ?
               categories.notFound.map(item => this._renderSnpCard(item, 'notFound')) :
               html`<div class="empty-state">No other associated SNPs found.</div>`
             }
