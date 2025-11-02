@@ -411,7 +411,7 @@ export class LazyResults extends LitElement {
     
     if (cachedTitle && cachedTitle !== 'loading...') {
       const isLong = cachedTitle.length > 80;
-      const titleId = `title-${studyUrl.split('/').pop()}`;
+      const titleId = `title-${item.rsid}-${studyUrl.split('/').pop()}`;
       const isExpanded = this.expandedTitles.has(titleId);
       
       return html`
