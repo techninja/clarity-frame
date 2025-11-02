@@ -13,7 +13,8 @@
     "photos:sync": "node scripts/google-photos-sync.js sync",
     "photos:list": "node scripts/google-photos-sync.js list",
     "pi-configure": "node src/pi-install.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "genetic": "npx http-server ./src/genetic-app"
   },
   "author": "techninja",
   "license": "MIT",

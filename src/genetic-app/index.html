@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Genetic Mutation Lookup Tool</title>
+  <link rel="icon" href="data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3e%3cpath d='M8 4c0 2.2 1.8 4 4 4s4-1.8 4-4-1.8-4-4-4-4 1.8-4 4zm8 8c0 2.2 1.8 4 4 4s4-1.8 4-4-1.8-4-4-4-4 1.8-4 4zM8 20c0 2.2 1.8 4 4 4s4-1.8 4-4-1.8-4-4-4-4 1.8-4 4zm8 8c0 2.2 1.8 4 4 4s4-1.8 4-4-1.8-4-4-4-4 1.8-4 4z' fill='%233b82f6'/%3e%3cpath d='M12 8c2.2 0 4-1.8 4-4M16 16c2.2 0 4-1.8 4-4M12 24c2.2 0 4-1.8 4-4M16 32c2.2 0 4-1.8 4-4' stroke='%236366f1' stroke-width='2' fill='none'/%3e%3c/svg%3e">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script type="importmap">
+    {
+      "imports": {
+        "lit": "https://unpkg.com/lit@3/index.js",
+        "lit/": "https://unpkg.com/lit@3/",
+        "lit-element": "https://unpkg.com/lit-element@4/lit-element.js",
+        "lit-element/": "https://unpkg.com/lit-element@4/",
+        "@lit/reactive-element": "https://unpkg.com/@lit/reactive-element@2/reactive-element.js",
+        "@lit/reactive-element/": "https://unpkg.com/@lit/reactive-element@2/",
+        "lit-html": "https://unpkg.com/lit-html@3/lit-html.js",
+        "lit-html/": "https://unpkg.com/lit-html@3/",
+        "three": "https://unpkg.com/three@0.158.0/build/three.module.js"
+      }
+    }
+  </script>
+  <style>
+    body { 
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+  </style>
+</head>
+<body>
+  <genetic-app></genetic-app>
+  <script type="module" src="./components/genetic-app.js"></script>
+</body>
+</html>
