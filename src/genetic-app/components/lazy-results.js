@@ -422,6 +422,14 @@ export class LazyResults extends LitElement {
               <span class="detail-label">Risk Level:</span>
               <span class="risk-level ${riskClass}">${item.riskLevel}</span>
 
+              ${item.effects?.length ? html`
+                <span class="detail-label">Effect:</span>
+                <span class="effect-info">
+                  ${item.effects[0].direction} ${item.effects[0].description || item.traits}
+                  ${item.effects[0].magnitude ? ` (${item.effects[0].magnitude} ${item.effects[0].unit || ''})` : ''}
+                </span>
+              ` : ''}
+
               ${item.genes?.length ? html`
                 <span class="detail-label">Genes:</span>
                 <span class="gene-links">

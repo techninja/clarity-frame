@@ -172,13 +172,14 @@ export class GWASApi {
           if (rsidInfoMap.size >= maxResults) break;
           
           if (!rsidInfoMap.has(rsid)) {
-            rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set(), genes: new Set() });
+            rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set(), genes: new Set(), effects: [] });
           }
           const existing = rsidInfoMap.get(rsid);
           info.traits.forEach(t => existing.traits.add(t));
           info.riskAlleles.forEach(r => existing.riskAlleles.add(r));
           info.studyUrls.forEach(s => existing.studyUrls.add(s));
           info.genes.forEach(g => existing.genes.add(g));
+          info.effects.forEach(e => existing.effects.push(e));
         }
         
         if (rsidInfoMap.size >= maxResults) break;
@@ -247,6 +248,13 @@ export class GWASApi {
       const rsids = new Set();
       const riskAlleles = new Set();
       const genes = new Set();
+      const effectInfo = {
+        direction: assoc.betaDirection,
+        magnitude: assoc.betaNum,
+        unit: assoc.betaUnit,
+        description: assoc.pvalueDescription
+      };
+      console.log('Effect info for association:', effectInfo);
 
       // Extract rsIDs and risk alleles
       if (assoc.snps) {
@@ -322,13 +330,17 @@ export class GWASApi {
         if (targetRsid && rsid !== targetRsid) return;
         
         if (!rsidInfoMap.has(rsid)) {
-          rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set(), genes: new Set() });
+          rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set(), genes: new Set(), effects: [] });
         }
         
         const info = rsidInfoMap.get(rsid);
         traits.forEach(t => info.traits.add(t));
         riskAlleles.forEach(r => info.riskAlleles.add(r));
         genes.forEach(g => info.genes.add(g));
+        if (effectInfo.direction || effectInfo.magnitude) {
+          console.log('Adding effect info for rsid:', rsid, effectInfo);
+          info.effects.push(effectInfo);
+        }
         if (studyUrl) info.studyUrls.add(studyUrl);
       });
     }

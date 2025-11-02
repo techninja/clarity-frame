@@ -493,7 +493,8 @@ export class ResultsDisplay extends LitElement {
           riskAlleles: riskAlleles.join(', ') || 'N/A',
           riskLevel,
           studyUrls,
-          genes: Array.from(info.genes)
+          genes: Array.from(info.genes),
+          effects: info.effects || []
         });
         counts[category]++;
       } else {
@@ -502,7 +503,8 @@ export class ResultsDisplay extends LitElement {
           traits,
           riskAlleles: riskAlleles.join(', ') || 'N/A',
           studyUrls,
-          genes: Array.from(info.genes)
+          genes: Array.from(info.genes),
+          effects: info.effects || []
         });
         counts.notFound++;
       }
