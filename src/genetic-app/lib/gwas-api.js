@@ -3,6 +3,7 @@
  * @property {Set<string>} traits
  * @property {Set<string>} riskAlleles
  * @property {Set<string>} studyUrls
+ * @property {Set<string>} genes
  */
 
 export class GWASApi {
@@ -171,12 +172,13 @@ export class GWASApi {
           if (rsidInfoMap.size >= maxResults) break;
           
           if (!rsidInfoMap.has(rsid)) {
-            rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set() });
+            rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set(), genes: new Set() });
           }
           const existing = rsidInfoMap.get(rsid);
           info.traits.forEach(t => existing.traits.add(t));
           info.riskAlleles.forEach(r => existing.riskAlleles.add(r));
           info.studyUrls.forEach(s => existing.studyUrls.add(s));
+          info.genes.forEach(g => existing.genes.add(g));
         }
         
         if (rsidInfoMap.size >= maxResults) break;
@@ -244,6 +246,7 @@ export class GWASApi {
       const studyUrl = assoc._links?.study?.href;
       const rsids = new Set();
       const riskAlleles = new Set();
+      const genes = new Set();
 
       // Extract rsIDs and risk alleles
       if (assoc.snps) {
@@ -256,6 +259,13 @@ export class GWASApi {
       }
 
       assoc.loci?.forEach(locus => {
+        // Extract genes from authorReportedGenes array
+        locus.authorReportedGenes?.forEach(geneObj => {
+          if (geneObj.geneName) {
+            genes.add(geneObj.geneName);
+          }
+        });
+        
         locus.strongestRiskAlleles?.forEach(riskAllele => {
           if (riskAllele.riskAlleleName) {
             const [rsIdPart, allelePart] = riskAllele.riskAlleleName.split('-');
@@ -312,12 +322,13 @@ export class GWASApi {
         if (targetRsid && rsid !== targetRsid) return;
         
         if (!rsidInfoMap.has(rsid)) {
-          rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set() });
+          rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set(), genes: new Set() });
         }
         
         const info = rsidInfoMap.get(rsid);
         traits.forEach(t => info.traits.add(t));
         riskAlleles.forEach(r => info.riskAlleles.add(r));
+        genes.forEach(g => info.genes.add(g));
         if (studyUrl) info.studyUrls.add(studyUrl);
       });
     }

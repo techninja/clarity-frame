@@ -345,6 +345,13 @@ export class LazyResults extends LitElement {
               <span class="detail-label">Risk Level:</span>
               <span class="risk-level ${riskClass}">${item.riskLevel}</span>
 
+              ${item.genes?.length ? html`
+                <span class="detail-label">Genes:</span>
+                <span class="gene-links">
+                  ${item.genes.map((gene, i) => html`${i > 0 ? ', ' : ''}<a href="https://www.ncbi.nlm.nih.gov/gene/?term=${encodeURIComponent(gene)}" target="_blank" class="external-link">${gene}</a>`)}
+                </span>
+              ` : ''}
+
               <span class="detail-label">More Info:</span>
               <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">dbSNP</a>
             </div>
@@ -352,6 +359,13 @@ export class LazyResults extends LitElement {
             <div class="snp-details">
               <span class="detail-label">Risk Allele(s):</span>
               <span class="allele-display">${item.riskAlleles}</span>
+
+              ${item.genes?.length ? html`
+                <span class="detail-label">Genes:</span>
+                <span class="gene-links">
+                  ${item.genes.map((gene, i) => html`${i > 0 ? ', ' : ''}<a href="https://www.ncbi.nlm.nih.gov/gene/?term=${encodeURIComponent(gene)}" target="_blank" class="external-link">${gene}</a>`)}
+                </span>
+              ` : ''}
 
               <span class="detail-label">More Info:</span>
               <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">dbSNP</a>
