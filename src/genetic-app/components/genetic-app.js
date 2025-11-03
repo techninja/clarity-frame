@@ -7,6 +7,7 @@ import './file-upload.js';
 import './search-panel.js';
 import './results-display.js';
 import './progress-bar.js';
+import './help-panel.js';
 
 export class GeneticApp extends LitElement {
   static styles = css`
@@ -170,9 +171,6 @@ export class GeneticApp extends LitElement {
     }
 
     header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
       background: var(--bg-secondary);
       backdrop-filter: blur(4px);
       padding: 1rem;
@@ -180,6 +178,12 @@ export class GeneticApp extends LitElement {
       box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
       border: 1px solid var(--border-color);
       transition: all 0.3s ease;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
     }
 
     .header-content {
@@ -193,6 +197,7 @@ export class GeneticApp extends LitElement {
       gap: 1rem;
     }
     
+    .help-button,
     .theme-toggle {
       background: none;
       border: none;
@@ -201,10 +206,17 @@ export class GeneticApp extends LitElement {
       padding: 0.5rem;
       border-radius: 0.5rem;
       transition: background-color 0.2s;
+      color: var(--text-primary);
     }
     
+    .help-button:hover,
     .theme-toggle:hover {
       background: rgba(0, 0, 0, 0.1);
+    }
+
+    .help-button.active {
+      background: var(--accent-blue);
+      color: white;
     }
 
     .trash-button {
@@ -427,6 +439,64 @@ export class GeneticApp extends LitElement {
       to { transform: rotate(360deg); }
     }
 
+    .help-section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0.75rem;
+      margin-top: 1rem;
+      padding: 1.5rem;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease, padding 0.3s ease;
+    }
+
+    .help-section.expanded {
+      max-height: 600px;
+      overflow-y: auto;
+    }
+
+    .help-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .help-category {
+      background: var(--bg-card);
+      border-radius: 0.5rem;
+      padding: 1rem;
+      border: 1px solid var(--border-light);
+    }
+
+    .help-category h3 {
+      color: var(--accent-blue);
+      font-size: 1.125rem;
+      font-weight: 600;
+      margin: 0 0 0.75rem 0;
+    }
+
+    .help-term {
+      margin-bottom: 0.75rem;
+    }
+
+    .help-term:last-child {
+      margin-bottom: 0;
+    }
+
+    .help-term strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .help-term p {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin: 0.25rem 0 0 0;
+      line-height: 1.4;
+    }
+
     .hidden {
       display: none;
     }
@@ -446,7 +516,8 @@ export class GeneticApp extends LitElement {
     activeTab: { type: String },
     currentEmoji: { type: String },
     darkMode: { type: Boolean, reflect: true, attribute: 'dark' },
-    savedCounts: { type: Object }
+    savedCounts: { type: Object },
+    showHelp: { type: Boolean }
   };
 
   constructor() {
@@ -464,6 +535,7 @@ export class GeneticApp extends LitElement {
     this.activeTab = 'search';
     this.currentEmoji = '🧬';
     this.darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    this.showHelp = false;
     this.database = new GeneticDatabase();
     this.savedDatabase = new SavedDatabase();
     this.gwasApi = new GWASApi();
@@ -890,6 +962,10 @@ export class GeneticApp extends LitElement {
     this.dnaBackground?.setDarkMode(this.darkMode);
   }
 
+  _toggleHelp() {
+    this.showHelp = !this.showHelp;
+  }
+
   async _handleSaveItem(event) {
     const { rsid, snpData, traitInfo, searchTrait } = event.detail;
     try {
@@ -1024,26 +1100,36 @@ export class GeneticApp extends LitElement {
       <canvas id="dna-canvas"></canvas>
       <div class="container">
         <header>
-          <div class="header-content">
-            <h1>Genetic Mutation Lookup Tool</h1>
-            <p class="subtitle">${this.recordCount.toLocaleString()} genetic variants loaded</p>
+          <div class="header-top">
+            <div class="header-content">
+              <h1>Genetic Mutation Lookup Tool</h1>
+              <p class="subtitle">${this.recordCount.toLocaleString()} genetic variants loaded</p>
+            </div>
+            <div class="header-actions">
+              <button 
+                class="help-button ${this.showHelp ? 'active' : ''}"
+                @click=${this._toggleHelp}
+                title="Toggle help"
+              >
+                ❓
+              </button>
+              <button 
+                class="theme-toggle"
+                @click=${this._toggleTheme}
+                title="Toggle dark/light theme"
+              >
+                ${this.darkMode ? '☀️' : '🌙'}
+              </button>
+              <button 
+                class="trash-button"
+                @click=${this._handleClearDatabase}
+                title="Clear all data and start over"
+              >
+                🗑️
+              </button>
+            </div>
           </div>
-          <div class="header-actions">
-            <button 
-              class="theme-toggle"
-              @click=${this._toggleTheme}
-              title="Toggle dark/light theme"
-            >
-              ${this.darkMode ? '☀️' : '🌙'}
-            </button>
-            <button 
-              class="trash-button"
-              @click=${this._handleClearDatabase}
-              title="Clear all data and start over"
-            >
-              🗑️
-            </button>
-          </div>
+          <help-panel ?expanded=${this.showHelp}></help-panel>
         </header>
 
         <div class="main-tabs">
