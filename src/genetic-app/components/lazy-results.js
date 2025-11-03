@@ -351,9 +351,29 @@ export class LazyResults extends LitElement {
 
     .gene-links.truncated {
       max-height: 2.8em;
+      overflow: hidden;
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
+      word-break: break-word;
+    }
+    
+    .gene-links.expanded {
+      max-height: 15em;
+      display: block;
+      white-space: normal;
+    }
+    
+    .gene-links .external-link {
+      display: inline;
+      padding: 0;
+      border: none;
+      background: none;
+    }
+    
+    .gene-links.expanded .external-link {
+      display: inline-block;
+      margin-right: 0.25rem;
     }
 
     .gene-links.expanded {
