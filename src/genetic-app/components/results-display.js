@@ -11,19 +11,14 @@ export class ResultsDisplay extends LitElement {
     }
 
     .results-container {
-      background: rgba(249, 250, 251, 0.9);
-      border: 1px solid #e5e7eb;
-      border-radius: 0.75rem;
-      backdrop-filter: blur(2px);
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      backdrop-filter: none;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
-    }
-
-    @media (min-width: 768px) {
-      .results-container {
-        height: calc(100vh - var(--header-height, 8rem) - var(--search-panel-height, 12rem));
-      }
+      min-height: 100%;
     }
 
     .results-header-section {
@@ -150,15 +145,11 @@ export class ResultsDisplay extends LitElement {
 
     .tab-content {
       flex: 1;
-      overflow: hidden;
-      min-height: 0;
       position: relative;
     }
 
     .tab-pane {
-      height: 100%;
       display: block;
-      overflow: hidden;
     }
 
     .tab-pane.hidden {
@@ -667,30 +658,11 @@ export class ResultsDisplay extends LitElement {
   }
 
   _renderResults(query, categories, counts, totalAssociated, totalMatched) {
-
     const processedResults = { query, categories, counts, totalAssociated, totalMatched };
 
     return html`
       <div class="results-container">
-        <div class="results-header-section">
-          <div class="results-header">
-            <h3 class="results-title">Results for "${query}"</h3>
-            <p class="results-summary">
-              Found <strong>${totalAssociated.toLocaleString()}</strong> known SNP(s) associated with this term.
-              <strong style="color: ${totalMatched > 0 ? '#059669' : '#6b7280'}">${totalMatched.toLocaleString()}</strong>
-              ${totalMatched === 1 ? 'match was' : 'matches were'} found in your data.
-            </p>
-          </div>
-
-          ${this._renderChart(processedResults)}
-
-          <div class="disclaimer">
-            <strong>Disclaimer:</strong> This is a tool for informational purposes only and is not medical advice.
-            "Risk" is a statistical measure and does not mean you will or will not develop a condition.
-            Consult a healthcare professional for any health concerns.
-          </div>
-
-          <div class="tabs">
+        <div class="tabs">
           <button class="tab-button high ${this.activeTab === 'high' ? 'active' : ''}"
                   ?disabled=${counts.high === 0}
                   @click=${() => this._switchTab('high')}>
@@ -716,7 +688,6 @@ export class ResultsDisplay extends LitElement {
                   @click=${() => this._switchTab('notFound')}>
             Not Found (${counts.notFound})
           </button>
-          </div>
         </div>
 
         ${processedResults.isLimited ? html`

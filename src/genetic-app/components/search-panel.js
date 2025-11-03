@@ -9,92 +9,19 @@ export class SearchPanel extends LitElement {
       width: 100%;
     }
 
-    @media (min-width: 768px) {
-      :host {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 50;
-        max-width: 80vw;
-        margin: 0 auto;
-        padding: 0 1rem 0 1rem;
-        transition: padding 0.3s ease;
-      }
-      
-      :host(.collapsed) {
-        padding: 0;
-      }
-    }
-
     .card {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 0.75rem;
-      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-      padding: 1.5rem;
-      backdrop-filter: blur(4px);
-      transition: all 0.3s ease;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    @media (min-width: 768px) {
-      .card {
-        box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1), 0 -2px 4px -2px rgb(0 0 0 / 0.1);
-        padding: 1rem 1.5rem;
-      }
-      
-      .card.collapsed {
-        border-radius: 0;
-        padding: 0.75rem 1.5rem;
-        margin: 0;
-      }
+      background: transparent;
+      border: none;
+      padding: 0;
+      box-shadow: none;
     }
 
     .header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      cursor: pointer;
-    }
-
-    @media (min-width: 768px) {
-      .header {
-        margin-bottom: 0;
-      }
-    }
-
-    .toggle-button {
-      background: none;
-      border: none;
-      font-size: 1.25rem;
-      cursor: pointer;
-      color: #6b7280;
-      transition: transform 0.3s ease;
-    }
-
-    .toggle-button.collapsed {
-      transform: rotate(180deg);
-    }
-
-    @media (max-width: 767px) {
-      .toggle-button {
-        display: none;
-      }
+      margin-bottom: 1rem;
     }
 
     .collapsible-content {
-      overflow: hidden;
-      transition: max-height 0.3s ease;
-    }
-
-    @media (min-width: 768px) {
-      .collapsible-content {
-        max-height: 1000px;
-      }
-      
-      .collapsible-content.collapsed {
-        max-height: 0;
-      }
+      display: block;
     }
 
     .card.disabled {
@@ -258,7 +185,6 @@ export class SearchPanel extends LitElement {
     loadingTraits: { type: Boolean },
     nextTraitUrl: { type: String },
     searchQuery: { type: String },
-    collapsed: { type: Boolean },
     searching: { type: Boolean }
   };
 
@@ -269,7 +195,6 @@ export class SearchPanel extends LitElement {
     this.loadingTraits = false;
     this.nextTraitUrl = null;
     this.searchQuery = '';
-    this.collapsed = false;
     this.searching = false;
     this.gwasApi = new GWASApi();
     this.traitColors = ['blue', 'green', 'yellow', 'purple', 'pink', 'indigo', 'red', 'teal'];
@@ -353,9 +278,7 @@ export class SearchPanel extends LitElement {
     }
   }
 
-  _toggleCollapsed() {
-    this.collapsed = !this.collapsed;
-  }
+
 
   _simpleHash(str) {
     let hash = 0;
@@ -369,15 +292,12 @@ export class SearchPanel extends LitElement {
 
   render() {
     return html`
-      <div class="card ${this.enabled ? '' : 'disabled'} ${this.collapsed ? 'collapsed' : ''}">
-        <div class="header" @click=${this._toggleCollapsed}>
+      <div class="card ${this.enabled ? '' : 'disabled'}">
+        <div class="header">
           <h2>Search Traits or rsIDs</h2>
-          <button class="toggle-button ${this.collapsed ? 'collapsed' : ''}">
-            ▼
-          </button>
         </div>
         
-        <div class="collapsible-content ${this.collapsed ? 'collapsed' : ''}">
+        <div class="collapsible-content">
           <p class="description">
             Enter a keyword (e.g., "heart disease") to find associated SNPs, or enter a 
             specific rsID (e.g., "rs123456"). Uses the public NHGRI-EBI GWAS Catalog.

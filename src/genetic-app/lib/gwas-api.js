@@ -135,19 +135,6 @@ export class GWASApi {
 
     const rsidInfoMap = new Map();
     const totalTraits = efoTraits.length;
-
-    const queryStartTime = Date.now();
-    let timerInterval;
-    
-    if (progressCallback) {
-      timerInterval = setInterval(() => {
-        const elapsed = (Date.now() - queryStartTime) / 1000;
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = Math.floor(elapsed % 60);
-        const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        progressCallback(1, totalTraits, `Querying... [${timeStr}]`);
-      }, 1000);
-    }
     
     for (let i = 0; i < efoTraits.length; i++) {
       const trait = efoTraits[i];
@@ -160,9 +147,7 @@ export class GWASApi {
           assocUrl, 
           maxResults - rsidInfoMap.size,
           (loaded, total, progressStr) => {
-            if (progressStr) {
-              progressCallback?.(i + 1, totalTraits, progressStr);
-            }
+            progressCallback?.(i + 1, totalTraits, progressStr || `Processing trait ${i + 1}/${totalTraits}`);
           }
         );
         const traitMap = await this._processAssociations(associations, null, trait.trait);
@@ -188,9 +173,7 @@ export class GWASApi {
       }
     }
 
-    if (timerInterval) {
-      clearInterval(timerInterval);
-    }
+
 
     return rsidInfoMap;
   }
@@ -254,7 +237,6 @@ export class GWASApi {
         unit: assoc.betaUnit,
         description: assoc.pvalueDescription
       };
-      console.log('Effect info for association:', effectInfo);
 
       // Extract rsIDs and risk alleles
       if (assoc.snps) {
@@ -338,7 +320,6 @@ export class GWASApi {
         riskAlleles.forEach(r => info.riskAlleles.add(r));
         genes.forEach(g => info.genes.add(g));
         if (effectInfo.direction || effectInfo.magnitude) {
-          console.log('Adding effect info for rsid:', rsid, effectInfo);
           info.effects.push(effectInfo);
         }
         if (studyUrl) info.studyUrls.add(studyUrl);
