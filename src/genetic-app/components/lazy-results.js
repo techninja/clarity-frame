@@ -249,6 +249,71 @@ export class LazyResults extends LitElement {
       font-size: 0.625rem;
       color: #9ca3af;
     }
+
+    .study-title {
+      display: block;
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+      cursor: pointer;
+      line-height: 1.4;
+    }
+
+    .study-title.truncated {
+      max-height: 2.8em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      text-overflow: ellipsis;
+    }
+
+    .study-title.expanded {
+      max-height: 20em;
+      display: block;
+    }
+
+    .study-title.clickable:hover {
+      color: #3b82f6;
+    }
+
+    .gene-container {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.25rem;
+    }
+
+    .gene-links {
+      transition: max-height 0.3s ease;
+      overflow: hidden;
+      line-height: 1.4;
+    }
+
+    .gene-links.truncated {
+      max-height: 2.8em;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .gene-links.expanded {
+      max-height: 15em;
+      display: block;
+    }
+
+    .gene-chevron {
+      cursor: pointer;
+      color: #6b7280;
+      font-size: 0.75rem;
+      transition: transform 0.2s ease;
+      margin-top: 0.1rem;
+    }
+
+    .gene-chevron:hover {
+      color: #3b82f6;
+    }
+
+    .gene-chevron.expanded {
+      transform: rotate(180deg);
+    }
   `;
 
   static properties = {
@@ -267,15 +332,45 @@ export class LazyResults extends LitElement {
     this.batchSize = 20;
     this.visibleCount = 20;
     this.loading = false;
+    this.expandedTitles = new Set();
+    this.expandedGenes = new Set();
   }
 
   firstUpdated() {
     this.addEventListener('scroll', this._handleScroll.bind(this));
+    this._setupIntersectionObserver();
+  }
+
+  _setupIntersectionObserver() {
+    this.observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const studyUrl = entry.target.dataset.studyUrl;
+          if (studyUrl && !this.studyTitles?.has(studyUrl)) {
+            this._fetchStudyTitle(studyUrl);
+          }
+        }
+      });
+    }, { threshold: 0.1 });
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    if (this.observer) {
+      this.observer.disconnect();
+    }
   }
 
   updated(changedProperties) {
     if (changedProperties.has('items')) {
       this.visibleCount = Math.min(this.batchSize, this.items.length);
+    }
+    
+    // Observe new study placeholders
+    if (this.observer) {
+      this.shadowRoot.querySelectorAll('.study-placeholder[data-study-url]').forEach(el => {
+        this.observer.observe(el);
+      });
     }
   }
 
@@ -302,6 +397,104 @@ export class LazyResults extends LitElement {
       this.loading = false;
       this.requestUpdate();
     }, 100);
+  }
+
+  _renderStudyTitle(item) {
+    if (!item.studyUrls?.length) return '';
+    
+    if (!this.studyTitles) {
+      this.studyTitles = new Map();
+    }
+    
+    const studyUrl = Array.from(item.studyUrls)[0];
+    const cachedTitle = this.studyTitles.get(studyUrl);
+    
+    if (cachedTitle && cachedTitle !== 'loading...') {
+      const isLong = cachedTitle.length > 80;
+      const titleId = `title-${item.rsid}-${studyUrl.split('/').pop()}`;
+      const isExpanded = this.expandedTitles.has(titleId);
+      
+      return html`
+        <span class="detail-label">Study:</span>
+        <span class="study-title ${isLong ? (isExpanded ? 'expanded clickable' : 'truncated clickable') : ''}" 
+              @click="${isLong ? () => this._toggleStudyText(titleId) : null}">
+          ${cachedTitle}
+        </span>
+      `;
+    }
+    
+    // Return placeholder that will trigger lazy loading when visible
+    return html`
+      <span class="study-placeholder" data-study-url="${studyUrl}"></span>
+    `;
+  }
+
+  _toggleStudyText(titleId) {
+    if (this.expandedTitles.has(titleId)) {
+      this.expandedTitles.delete(titleId);
+    } else {
+      this.expandedTitles.add(titleId);
+    }
+    this.requestUpdate();
+  }
+
+  _renderGenes(item) {
+    if (!item.genes?.length) return '';
+    
+    const geneText = item.genes.join(', ');
+    const isLong = geneText.length > 60;
+    const geneId = `genes-${item.rsid}`;
+    const isExpanded = this.expandedGenes.has(geneId);
+    
+    return html`
+      <span class="detail-label">Genes:</span>
+      <div class="gene-container">
+        <span class="gene-links ${isLong ? (isExpanded ? 'expanded' : 'truncated') : ''}">
+          ${item.genes.map((gene, i) => html`${i > 0 ? ', ' : ''}<a href="https://www.ncbi.nlm.nih.gov/gene/?term=${encodeURIComponent(gene)}" target="_blank" class="external-link">${gene}</a>`)}
+        </span>
+        ${isLong ? html`
+          <span class="gene-chevron ${isExpanded ? 'expanded' : ''}" 
+                @click="${() => this._toggleGenes(geneId)}">
+            ▼
+          </span>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  _toggleGenes(geneId) {
+    if (this.expandedGenes.has(geneId)) {
+      this.expandedGenes.delete(geneId);
+    } else {
+      this.expandedGenes.add(geneId);
+    }
+    this.requestUpdate();
+  }
+
+  async _fetchStudyTitle(studyUrl) {
+    if (this.studyTitles.has(studyUrl)) return;
+    
+    // Mark as loading to prevent duplicate requests
+    this.studyTitles.set(studyUrl, 'loading...');
+    
+    try {
+      const response = await fetch(studyUrl);
+      if (response.ok) {
+        const studyData = await response.json();
+        const title = studyData?.publicationInfo?.title;
+        if (title) {
+          this.studyTitles.set(studyUrl, title);
+          this.requestUpdate();
+        } else {
+          this.studyTitles.delete(studyUrl);
+        }
+      } else {
+        this.studyTitles.delete(studyUrl);
+      }
+    } catch (error) {
+      console.warn('Could not fetch study title:', error);
+      this.studyTitles.delete(studyUrl);
+    }
   }
 
 
@@ -345,6 +538,18 @@ export class LazyResults extends LitElement {
               <span class="detail-label">Risk Level:</span>
               <span class="risk-level ${riskClass}">${item.riskLevel}</span>
 
+              ${item.effects?.length ? html`
+                <span class="detail-label">Effect:</span>
+                <span class="effect-info">
+                  ${item.effects[0].direction} ${item.effects[0].description || item.traits}
+                  ${item.effects[0].magnitude ? ` (${item.effects[0].magnitude} ${item.effects[0].unit || ''})` : ''}
+                </span>
+              ` : ''}
+
+              ${this._renderGenes(item)}
+
+              ${this._renderStudyTitle(item)}
+
               <span class="detail-label">More Info:</span>
               <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">dbSNP</a>
             </div>
@@ -352,6 +557,10 @@ export class LazyResults extends LitElement {
             <div class="snp-details">
               <span class="detail-label">Risk Allele(s):</span>
               <span class="allele-display">${item.riskAlleles}</span>
+
+              ${this._renderGenes(item)}
+
+              ${this._renderStudyTitle(item)}
 
               <span class="detail-label">More Info:</span>
               <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">dbSNP</a>

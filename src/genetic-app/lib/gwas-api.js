@@ -3,6 +3,7 @@
  * @property {Set<string>} traits
  * @property {Set<string>} riskAlleles
  * @property {Set<string>} studyUrls
+ * @property {Set<string>} genes
  */
 
 export class GWASApi {
@@ -134,19 +135,6 @@ export class GWASApi {
 
     const rsidInfoMap = new Map();
     const totalTraits = efoTraits.length;
-
-    const queryStartTime = Date.now();
-    let timerInterval;
-    
-    if (progressCallback) {
-      timerInterval = setInterval(() => {
-        const elapsed = (Date.now() - queryStartTime) / 1000;
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = Math.floor(elapsed % 60);
-        const timeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        progressCallback(1, totalTraits, `Querying... [${timeStr}]`);
-      }, 1000);
-    }
     
     for (let i = 0; i < efoTraits.length; i++) {
       const trait = efoTraits[i];
@@ -159,9 +147,7 @@ export class GWASApi {
           assocUrl, 
           maxResults - rsidInfoMap.size,
           (loaded, total, progressStr) => {
-            if (progressStr) {
-              progressCallback?.(i + 1, totalTraits, progressStr);
-            }
+            progressCallback?.(i + 1, totalTraits, progressStr || `Processing trait ${i + 1}/${totalTraits}`);
           }
         );
         const traitMap = await this._processAssociations(associations, null, trait.trait);
@@ -171,12 +157,14 @@ export class GWASApi {
           if (rsidInfoMap.size >= maxResults) break;
           
           if (!rsidInfoMap.has(rsid)) {
-            rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set() });
+            rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set(), genes: new Set(), effects: [] });
           }
           const existing = rsidInfoMap.get(rsid);
           info.traits.forEach(t => existing.traits.add(t));
           info.riskAlleles.forEach(r => existing.riskAlleles.add(r));
           info.studyUrls.forEach(s => existing.studyUrls.add(s));
+          info.genes.forEach(g => existing.genes.add(g));
+          info.effects.forEach(e => existing.effects.push(e));
         }
         
         if (rsidInfoMap.size >= maxResults) break;
@@ -185,9 +173,7 @@ export class GWASApi {
       }
     }
 
-    if (timerInterval) {
-      clearInterval(timerInterval);
-    }
+
 
     return rsidInfoMap;
   }
@@ -244,6 +230,13 @@ export class GWASApi {
       const studyUrl = assoc._links?.study?.href;
       const rsids = new Set();
       const riskAlleles = new Set();
+      const genes = new Set();
+      const effectInfo = {
+        direction: assoc.betaDirection,
+        magnitude: assoc.betaNum,
+        unit: assoc.betaUnit,
+        description: assoc.pvalueDescription
+      };
 
       // Extract rsIDs and risk alleles
       if (assoc.snps) {
@@ -256,6 +249,13 @@ export class GWASApi {
       }
 
       assoc.loci?.forEach(locus => {
+        // Extract genes from authorReportedGenes array
+        locus.authorReportedGenes?.forEach(geneObj => {
+          if (geneObj.geneName) {
+            genes.add(geneObj.geneName);
+          }
+        });
+        
         locus.strongestRiskAlleles?.forEach(riskAllele => {
           if (riskAllele.riskAlleleName) {
             const [rsIdPart, allelePart] = riskAllele.riskAlleleName.split('-');
@@ -275,7 +275,7 @@ export class GWASApi {
       if (traitName) {
         traits.add(traitName);
       } else {
-        // Try to get from EFO traits
+        // Get traits from EFO
         const efoTraitsUrl = assoc._links?.efoTraits?.href;
         if (efoTraitsUrl) {
           try {
@@ -312,12 +312,16 @@ export class GWASApi {
         if (targetRsid && rsid !== targetRsid) return;
         
         if (!rsidInfoMap.has(rsid)) {
-          rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set() });
+          rsidInfoMap.set(rsid, { traits: new Set(), riskAlleles: new Set(), studyUrls: new Set(), genes: new Set(), effects: [] });
         }
         
         const info = rsidInfoMap.get(rsid);
         traits.forEach(t => info.traits.add(t));
         riskAlleles.forEach(r => info.riskAlleles.add(r));
+        genes.forEach(g => info.genes.add(g));
+        if (effectInfo.direction || effectInfo.magnitude) {
+          info.effects.push(effectInfo);
+        }
         if (studyUrl) info.studyUrls.add(studyUrl);
       });
     }

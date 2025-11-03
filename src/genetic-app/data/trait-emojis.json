@@ -1,0 +1,278 @@
+{
+  "cardiovascular": {
+    "emoji": "❤️",
+    "keywords": ["heart", "cardiac", "cardiovascular", "coronary", "artery", "blood pressure", "hypertension", "stroke", "atrial fibrillation", "myocardial", "angina", "lesion"]
+  },
+  "neurological": {
+    "emoji": "🧠",
+    "keywords": ["brain", "neuro", "alzheimer", "parkinson", "dementia", "cognitive", "memory", "seizure", "epilepsy", "migraine", "headache", "depression", "anxiety", "bipolar", "schizophrenia"]
+  },
+  "metabolic": {
+    "emoji": "🩸",
+    "keywords": ["diabetes", "glucose", "insulin", "metabolic", "cholesterol", "triglyceride", "lipid", "thyroid", "hormone", "endocrine"]
+  },
+  "weight": {
+    "emoji": "⚖️",
+    "keywords": ["weight", "obesity", "bmi", "body mass", "overweight", "underweight", "adiposity", "fat", "lean mass"]
+  },
+  "eating": {
+    "emoji": "🍽️",
+    "keywords": ["eating", "binge", "anorexia", "bulimia", "appetite", "food", "nutrition", "diet", "hunger", "satiety"]
+  },
+  "respiratory": {
+    "emoji": "🫁",
+    "keywords": ["lung", "respiratory", "asthma", "copd", "breathing", "pneumonia", "tuberculosis", "pulmonary", "oxygen"]
+  },
+  "cancer": {
+    "emoji": "🎗️",
+    "keywords": ["cancer", "tumor", "malignant", "oncology", "carcinoma", "lymphoma", "leukemia", "metastasis", "chemotherapy"]
+  },
+  "bone": {
+    "emoji": "🦴",
+    "keywords": ["bone", "osteo", "fracture", "arthritis", "joint", "cartilage", "spine", "hip", "knee", "calcium"]
+  },
+  "vision": {
+    "emoji": "👁️",
+    "keywords": ["eye", "vision", "sight", "retina", "glaucoma", "cataract", "macular", "blind", "visual", "optic"]
+  },
+  "skin": {
+    "emoji": "🧴",
+    "keywords": ["skin", "dermat", "eczema", "psoriasis", "melanoma", "pigment", "hair", "nail", "rash", "acne"]
+  },
+  "reproductive": {
+    "emoji": "👶",
+    "keywords": ["birth", "pregnancy", "gestational", "reproductive", "fertility", "menstrual", "ovarian", "testicular", "prostate", "breast"]
+  },
+  "growth": {
+    "emoji": "📏",
+    "keywords": ["height", "growth", "stature", "tall", "short", "development", "puberty", "pediatric", "arm span", "arm", "span", "length", "anthropometric", "limb"]
+  },
+  "cognitive": {
+    "emoji": "📚",
+    "keywords": ["reading", "learning", "education", "intelligence", "iq", "literacy", "academic", "school", "study"]
+  },
+  "blood": {
+    "emoji": "🩸",
+    "keywords": ["blood", "anemia", "hemoglobin", "hematocrit", "platelet", "clotting", "bleeding", "circulation", "iron"]
+  },
+  "immune": {
+    "emoji": "🛡️",
+    "keywords": ["immune", "autoimmune", "allergy", "inflammation", "infection", "antibody", "vaccine", "lupus", "rheumatoid"]
+  },
+  "kidney": {
+    "emoji": "🫘",
+    "keywords": ["kidney", "renal", "nephro", "dialysis", "creatinine", "urea", "proteinuria", "hypertension"]
+  },
+  "liver": {
+    "emoji": "🟤",
+    "keywords": ["liver", "hepatic", "cirrhosis", "hepatitis", "bile", "jaundice", "enzyme", "alcohol"]
+  },
+  "sleep": {
+    "emoji": "😴",
+    "keywords": ["sleep", "insomnia", "apnea", "circadian", "melatonin", "narcolepsy", "restless", "fatigue"]
+  },
+  "addiction": {
+    "emoji": "🚬",
+    "keywords": ["smoking", "tobacco", "nicotine", "alcohol", "addiction", "substance", "drug", "dependence"]
+  },
+  "pain": {
+    "emoji": "🤕",
+    "keywords": ["pain", "chronic", "fibromyalgia", "arthritis", "inflammation", "analgesic", "migraine"]
+  },
+  "aging": {
+    "emoji": "👴",
+    "keywords": ["aging", "longevity", "elderly", "geriatric", "senescence", "lifespan", "mortality"]
+  },
+  "measurement": {
+    "emoji": "📊",
+    "keywords": ["measurement", "biomarker", "amount", "level", "concentration", "dose", "capacity"]
+  },
+  "morphology": {
+    "emoji": "🧬",
+    "keywords": ["morphology", "pattern", "structure", "anatomy", "gyrus", "longitudinal", "transverse"]
+  },
+  "allergy": {
+    "emoji": "🤧",
+    "keywords": ["allergic", "rhinitis", "allergy", "hypersensitivity", "atopic"]
+  },
+  "hearing": {
+    "emoji": "👂",
+    "keywords": ["sound", "hearing", "auditory", "acoustic", "heschl", "impairment"]
+  },
+  "spine": {
+    "emoji": "🦴",
+    "keywords": ["spine", "spinal", "vertebral", "ossification", "ligament"]
+  },
+  "epilepsy": {
+    "emoji": "⚡",
+    "keywords": ["epilepsy", "seizure", "generalised", "convulsion"]
+  },
+  "tumor": {
+    "emoji": "🎗️",
+    "keywords": ["tumor", "necrosis", "factor", "receptor", "superfamily"]
+  },
+  "recombination": {
+    "emoji": "🧬",
+    "keywords": ["recombination", "genetic", "dna", "mitochondrial"]
+  },
+  "lung_function": {
+    "emoji": "🫁",
+    "keywords": ["fev", "emphysema", "pulmonary", "respiratory"]
+  },
+  "esophageal": {
+    "emoji": "🔴",
+    "keywords": ["esophageal", "squamous", "cell", "carcinoma"]
+  },
+  "psychotic": {
+    "emoji": "🧠",
+    "keywords": ["psychotic", "symptoms", "psychiatric", "mental"]
+  },
+  "mammographic": {
+    "emoji": "🩻",
+    "keywords": ["mammographic", "density", "breast", "imaging"]
+  },
+  "chemotherapy": {
+    "emoji": "💊",
+    "keywords": ["chemotherapy", "bevacizumab", "melphalan", "thiopurine", "induced"]
+  },
+  "immunoglobulin": {
+    "emoji": "🛡️",
+    "keywords": ["immunoglobulin", "antibody", "immune", "plasma"]
+  },
+  "sexual": {
+    "emoji": "⚤",
+    "keywords": ["sexual", "dimorphism", "dysfunction", "reproductive"]
+  },
+  "skinfold": {
+    "emoji": "📏",
+    "keywords": ["skinfold", "anthropometric", "body", "composition", "measurement", "circumference", "diameter"]
+  },
+  "neonate": {
+    "emoji": "👶",
+    "keywords": ["neonate", "newborn", "infant", "baby"]
+  },
+  "plasminogen": {
+    "emoji": "🩸",
+    "keywords": ["plasminogen", "coagulation", "clotting", "fibrinolysis"]
+  },
+  "family": {
+    "emoji": "👨‍👩‍👧‍👦",
+    "keywords": ["family", "size", "parental", "genotype", "effect"]
+  },
+  "hypospadias": {
+    "emoji": "🚼",
+    "keywords": ["hypospadias", "congenital", "urogenital", "developmental"]
+  },
+  "hypermetropia": {
+    "emoji": "👓",
+    "keywords": ["hypermetropia", "refractive", "vision", "farsighted"]
+  },
+  "cataract": {
+    "emoji": "👁️",
+    "keywords": ["cataract", "age-related", "lens", "opacity"]
+  },
+  "mucositis": {
+    "emoji": "👄",
+    "keywords": ["mucositis", "oral", "mouth", "ulcer"]
+  },
+  "pancreatitis": {
+    "emoji": "🟡",
+    "keywords": ["pancreatitis", "pancreatic", "inflammation"]
+  },
+  "language": {
+    "emoji": "🗣️",
+    "keywords": ["language", "expressive", "ability", "communication"]
+  },
+  "hiv": {
+    "emoji": "🦠",
+    "keywords": ["hiv", "viral", "set", "point", "infection"]
+  },
+  "susceptibility": {
+    "emoji": "🛡️",
+    "keywords": ["susceptibility", "mycobacterial", "infections", "immune"]
+  },
+  "antidepressant": {
+    "emoji": "💊",
+    "keywords": ["antidepressant", "bupropion", "buspirone", "citalopram", "sertraline", "venlafaxine", "dizziness"]
+  },
+  "selenium": {
+    "emoji": "⚗️",
+    "keywords": ["selenium", "mineral", "trace", "element"]
+  },
+  "iron": {
+    "emoji": "🔴",
+    "keywords": ["iron", "serum", "transferrin", "saturation", "binding"]
+  },
+  "blood_pressure": {
+    "emoji": "🩺",
+    "keywords": ["systolic", "diastolic", "blood", "pressure", "hypertension"]
+  },
+  "head": {
+    "emoji": "🗣️",
+    "keywords": ["head", "cranial", "cephalic", "skull", "cranium"]
+  },
+  "face": {
+    "emoji": "😊",
+    "keywords": ["face", "facial", "cheek", "forehead", "jaw", "chin", "mandible", "maxilla"]
+  },
+  "neck": {
+    "emoji": "🦒",
+    "keywords": ["neck", "cervical", "throat", "larynx", "pharynx", "trachea"]
+  },
+  "chest": {
+    "emoji": "🫀",
+    "keywords": ["chest", "thorax", "thoracic", "rib", "sternum", "pectoral"]
+  },
+  "abdomen": {
+    "emoji": "🫄",
+    "keywords": ["abdomen", "abdominal", "belly", "stomach", "gastric", "intestinal", "bowel"]
+  },
+  "back": {
+    "emoji": "🔙",
+    "keywords": ["back", "dorsal", "posterior", "lumbar", "thoracic spine"]
+  },
+  "shoulder": {
+    "emoji": "💪",
+    "keywords": ["shoulder", "scapula", "clavicle", "deltoid", "acromial"]
+  },
+  "arm_parts": {
+    "emoji": "💪",
+    "keywords": ["arm", "upper arm", "forearm", "elbow", "wrist", "humerus", "radius", "ulna", "brachial"]
+  },
+  "hand": {
+    "emoji": "✋",
+    "keywords": ["hand", "finger", "thumb", "palm", "knuckle", "digit", "phalanx", "metacarpal"]
+  },
+  "leg_parts": {
+    "emoji": "🦵",
+    "keywords": ["leg", "thigh", "calf", "shin", "knee", "ankle", "femur", "tibia", "fibula", "patella"]
+  },
+  "foot": {
+    "emoji": "🦶",
+    "keywords": ["foot", "toe", "heel", "arch", "sole", "metatarsal", "tarsal", "plantar"]
+  },
+  "pelvis": {
+    "emoji": "🫁",
+    "keywords": ["pelvis", "pelvic", "hip", "sacrum", "coccyx", "ilium", "pubis", "ischium"]
+  },
+  "malaria": {
+    "emoji": "🦟",
+    "keywords": ["malaria", "mosquito", "anopheles", "plasmodium"]
+  },
+  "tick_borne": {
+    "emoji": "🪲",
+    "keywords": ["tick", "lyme", "borrelia", "rocky mountain", "spotted fever"]
+  },
+  "flea_borne": {
+    "emoji": "🪰",
+    "keywords": ["flea", "plague", "yersinia", "bubonic"]
+  },
+  "bee_wasp": {
+    "emoji": "🐝",
+    "keywords": ["bee", "wasp", "sting", "venom", "hymenoptera"]
+  },
+  "spider": {
+    "emoji": "🕷️",
+    "keywords": ["spider", "arachnid", "bite", "widow", "recluse"]
+  }
+}
