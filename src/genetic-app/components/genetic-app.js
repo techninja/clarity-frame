@@ -460,7 +460,7 @@ export class GeneticApp extends LitElement {
     this.searchProgress = { step: '', detail: '' };
     this.activeTab = 'search';
     this.currentEmoji = '🧬';
-    this.darkMode = false;
+    this.darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
     this.database = new GeneticDatabase();
     this.gwasApi = new GWASApi();
     this.dnaBackground = null;
