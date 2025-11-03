@@ -1,5 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { GeneticDatabase } from '../lib/database.js';
+import { SavedDatabase } from '../lib/saved-database.js';
 import { GWASApi } from '../lib/gwas-api.js';
 import { DNABackground } from '../lib/dna-background.js';
 import './file-upload.js';
@@ -130,6 +131,7 @@ export class GeneticApp extends LitElement {
     }
 
     .tab-content {
+      color: var(--text-primary);
       background: var(--bg-window);
       backdrop-filter: blur(4px);
       box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
@@ -443,7 +445,8 @@ export class GeneticApp extends LitElement {
     searchProgress: { type: Object },
     activeTab: { type: String },
     currentEmoji: { type: String },
-    darkMode: { type: Boolean, reflect: true, attribute: 'dark' }
+    darkMode: { type: Boolean, reflect: true, attribute: 'dark' },
+    savedCounts: { type: Object }
   };
 
   constructor() {
@@ -462,8 +465,10 @@ export class GeneticApp extends LitElement {
     this.currentEmoji = '🧬';
     this.darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
     this.database = new GeneticDatabase();
+    this.savedDatabase = new SavedDatabase();
     this.gwasApi = new GWASApi();
     this.dnaBackground = null;
+    this.savedCounts = { high: 0, moderate: 0, low: 0, unknown: 0, notFound: 0 };
   }
 
   async firstUpdated() {
@@ -483,6 +488,7 @@ export class GeneticApp extends LitElement {
   async _initDatabase() {
     try {
       await this.database.init();
+      await this.savedDatabase.init();
       this.recordCount = await this.database.getCount();
       this.dbReady = true;
       this.showClearButton = this.recordCount > 0;
@@ -514,8 +520,13 @@ export class GeneticApp extends LitElement {
     }
   }
 
-  _switchTab(tab) {
+  async _switchTab(tab) {
     this.activeTab = tab;
+    if (tab === 'saved') {
+      this.savedCounts = await this._getSavedCounts();
+    }
+    // Trigger update to ensure results display sets default tab
+    this.requestUpdate();
   }
 
   async _updateEmoji(query) {
@@ -879,6 +890,87 @@ export class GeneticApp extends LitElement {
     this.dnaBackground?.setDarkMode(this.darkMode);
   }
 
+  async _handleSaveItem(event) {
+    const { rsid, snpData, traitInfo, searchTrait } = event.detail;
+    try {
+      await this.savedDatabase.saveItem(rsid, searchTrait, snpData, traitInfo);
+      // Update saved counts if on saved tab
+      if (this.activeTab === 'saved') {
+        this.savedCounts = await this._getSavedCounts();
+      }
+      this.requestUpdate();
+    } catch (error) {
+      console.error('Failed to save item:', error);
+    }
+  }
+
+  async _handleItemDeleted() {
+    // Update saved counts when item is deleted
+    this.savedCounts = await this._getSavedCounts();
+    this.requestUpdate();
+  }
+
+  async _getSavedCounts() {
+    if (!this.savedDatabase) return { high: 0, moderate: 0, low: 0, unknown: 0, notFound: 0 };
+    try {
+      const savedItems = await this.savedDatabase.getAllItems();
+      const counts = { high: 0, moderate: 0, low: 0, unknown: 0, notFound: 0 };
+      savedItems.forEach(item => {
+        const category = item.traitInfo.riskLevel.toLowerCase().replace(' risk', '').replace(' ', '');
+        if (counts[category] !== undefined) counts[category]++;
+      });
+      return counts;
+    } catch (error) {
+      return { high: 0, moderate: 0, low: 0, unknown: 0, notFound: 0 };
+    }
+  }
+
+  _renderSavedChart() {
+    const counts = this.savedCounts;
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    if (total === 0) return '';
+
+    const highPerc = (counts.high / total * 100).toFixed(1);
+    const modPerc = (counts.moderate / total * 100).toFixed(1);
+    const lowPerc = (counts.low / total * 100).toFixed(1);
+    const unknownPerc = (counts.unknown / total * 100).toFixed(1);
+    const notFoundPerc = (counts.notFound / total * 100).toFixed(1);
+
+    return html`
+      <div class="chart-container">
+        ${counts.high > 0 ? html`
+          <div class="chart-segment" style="width: ${highPerc}%; background-color: #ef4444;" title="High Risk: ${counts.high}">
+            <span class="segment-label">${Math.round(highPerc)}%</span>
+          </div>
+        ` : ''}
+        ${counts.moderate > 0 ? html`
+          <div class="chart-segment" style="width: ${modPerc}%; background-color: #eab308;" title="Moderate Risk: ${counts.moderate}">
+            <span class="segment-label">${Math.round(modPerc)}%</span>
+          </div>
+        ` : ''}
+        ${counts.low > 0 ? html`
+          <div class="chart-segment" style="width: ${lowPerc}%; background-color: #22c55e;" title="Low Risk: ${counts.low}">
+            <span class="segment-label">${Math.round(lowPerc)}%</span>
+          </div>
+        ` : ''}
+        ${counts.unknown > 0 ? html`
+          <div class="chart-segment" style="width: ${unknownPerc}%; background-color: #6b7280;" title="Unknown Risk: ${counts.unknown}">
+            <span class="segment-label">${Math.round(unknownPerc)}%</span>
+          </div>
+        ` : ''}
+        ${counts.notFound > 0 ? html`
+          <div class="chart-segment" style="width: ${notFoundPerc}%; background-color: #d1d5db; color: #374151;" title="Not Found: ${counts.notFound}">
+            <span class="segment-label">${Math.round(notFoundPerc)}%</span>
+          </div>
+        ` : ''}
+      </div>
+      <div class="chart-labels">
+        <span>Your Saved Items</span>
+        <span>Risk Distribution</span>
+      </div>
+    `;
+  }
+
   render() {
     // Show upload prompt if no data
     if (!this.recordCount && !this.clearing) {
@@ -967,6 +1059,12 @@ export class GeneticApp extends LitElement {
           >
             Results
           </button>
+          <button 
+            class="tab-button ${this.activeTab === 'saved' ? 'active' : ''}"
+            @click=${() => this._switchTab('saved')}
+          >
+            Saved
+          </button>
         </div>
 
         <div class="tab-content">
@@ -981,6 +1079,21 @@ export class GeneticApp extends LitElement {
           <div class="tab-pane ${this.activeTab === 'results' ? '' : 'hidden'}">
             ${this._renderResultsHeader()}
           </div>
+
+          <div class="tab-pane ${this.activeTab === 'saved' ? '' : 'hidden'}">
+            <div class="results-header">
+              <div class="results-text">
+                <h3 class="results-title">Saved Items</h3>
+                <p class="results-summary">${Object.values(this.savedCounts).reduce((a, b) => a + b, 0) === 0 ? 'No saved items yet. Switch to Search tab to find SNPs and save them for review.' : 'Review your saved SNPs and add notes.'}</p>
+              </div>
+            </div>
+            ${this._renderSavedChart()}
+            <div class="disclaimer">
+              <strong>Disclaimer:</strong> This is a tool for informational purposes only and is not medical advice.
+              "Risk" is a statistical measure and does not mean you will or will not develop a condition.
+              Consult a healthcare professional for any health concerns.
+            </div>
+          </div>
         </div>
 
         <div class="results-wrapper">
@@ -991,6 +1104,11 @@ export class GeneticApp extends LitElement {
             .searchQuery=${this.currentSearchQuery}
             .searchProgress=${this.searchProgress}
             .darkMode=${this.darkMode}
+            .savedDatabase=${this.savedDatabase}
+            .activeTab=${this.activeTab}
+            @save-item=${this._handleSaveItem}
+            @switch-to-saved=${() => this._switchTab('saved')}
+            @item-deleted=${this._handleItemDeleted}
           ></results-display>
         </div>
       </div>

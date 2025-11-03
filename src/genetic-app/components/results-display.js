@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import './dna-loader.js';
 import './lazy-results.js';
+import './filter-tabs.js';
 
 export class ResultsDisplay extends LitElement {
   static styles = css`
@@ -106,45 +107,7 @@ export class ResultsDisplay extends LitElement {
       font-weight: 600;
     }
 
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid var(--border-light);
-      margin: 1rem 0 0 0;
-      overflow-x: auto;
-      flex-shrink: 0;
-    }
 
-    .tab-button {
-      padding: 0.75rem 1.25rem;
-      border-bottom: 2px solid transparent;
-      cursor: pointer;
-      font-weight: 500;
-      color: var(--text-secondary);
-      white-space: nowrap;
-      background: none;
-      border-left: none;
-      border-right: none;
-      border-top: none;
-    }
-
-    .tab-button.active {
-      border-bottom-color: currentColor;
-      color: var(--text-primary);
-      font-weight: 600;
-    }
-
-    .tab-button:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      color: var(--text-muted);
-      text-decoration: line-through;
-    }
-
-    .tab-button.high { color: var(--risk-high); }
-    .tab-button.moderate { color: var(--risk-moderate); }
-    .tab-button.low { color: var(--risk-low); }
-    .tab-button.unknown { color: var(--risk-unknown); }
-    .tab-button.not-found { color: var(--risk-unknown); }
 
     .tab-content {
       flex: 1;
@@ -430,7 +393,10 @@ export class ResultsDisplay extends LitElement {
     debugLoading: { type: Boolean },
     searchQuery: { type: String },
     searchProgress: { type: Object },
-    darkMode: { type: Boolean }
+    darkMode: { type: Boolean },
+    savedDatabase: { type: Object },
+    savedItems: { type: Array },
+    savedActiveTab: { type: String }
   };
 
   constructor() {
@@ -444,6 +410,9 @@ export class ResultsDisplay extends LitElement {
     this.searchQuery = '';
     this.searchProgress = { step: '', detail: '' };
     this.darkMode = false;
+    this.savedDatabase = null;
+    this.savedItems = [];
+    this.savedActiveTab = 'all';
   }
 
 
@@ -461,6 +430,15 @@ export class ResultsDisplay extends LitElement {
         setTimeout(() => {
           this.showLoader = false;
         }, 300);
+      }
+    }
+
+    if (changedProperties.has('activeTab')) {
+      if (this.activeTab === 'saved') {
+        this._loadSavedItems();
+      } else if (this.activeTab === 'results' && this.results) {
+        // Reset to default tab when switching back to results
+        this._setDefaultActiveTab();
       }
     }
   }
@@ -539,12 +517,17 @@ export class ResultsDisplay extends LitElement {
     }
   }
 
-  _switchTab(tab) {
-    const processedResults = this.results ? this._processResults(this.results) : null;
-    // Don't switch to disabled tabs
-    if (!processedResults?.counts || processedResults.counts[tab] === 0) return;
-    
-    this.activeTab = tab;
+  _handleTabChange(event) {
+    this.activeTab = event.detail.tab;
+    // Reset scroll position
+    setTimeout(() => {
+      const tabContent = this.shadowRoot.querySelector('.tab-content');
+      if (tabContent) tabContent.scrollTop = 0;
+    }, 0);
+  }
+
+  _handleSavedTabChange(event) {
+    this.savedActiveTab = event.detail.tab;
     // Reset scroll position
     setTimeout(() => {
       const tabContent = this.shadowRoot.querySelector('.tab-content');
@@ -605,6 +588,22 @@ export class ResultsDisplay extends LitElement {
 
 
 
+  async _loadSavedItems() {
+    if (!this.savedDatabase) return;
+    try {
+      this.savedItems = await this.savedDatabase.getAllItems();
+      this.requestUpdate();
+    } catch (error) {
+      console.error('Failed to load saved items:', error);
+    }
+  }
+
+  async _handleItemDeleted() {
+    // Reload saved items and pass event up
+    await this._loadSavedItems();
+    this.dispatchEvent(new CustomEvent('item-deleted', { bubbles: true }));
+  }
+
   render() {
     // Debug: Force loading state
     if (this.debugLoading) {
@@ -623,6 +622,11 @@ export class ResultsDisplay extends LitElement {
           <strong>Error:</strong> ${this.error}
         </div>
       `;
+    }
+
+    // Show saved items if on saved tab
+    if (this.activeTab === 'saved') {
+      return this._renderSavedItems();
     }
 
     // Show empty state
@@ -667,33 +671,18 @@ export class ResultsDisplay extends LitElement {
 
     return html`
       <div class="results-container">
-        <div class="tabs">
-          <button class="tab-button high ${this.activeTab === 'high' ? 'active' : ''}"
-                  ?disabled=${counts.high === 0}
-                  @click=${() => this._switchTab('high')}>
-            High Risk (${counts.high})
-          </button>
-          <button class="tab-button moderate ${this.activeTab === 'moderate' ? 'active' : ''}"
-                  ?disabled=${counts.moderate === 0}
-                  @click=${() => this._switchTab('moderate')}>
-            Moderate Risk (${counts.moderate})
-          </button>
-          <button class="tab-button low ${this.activeTab === 'low' ? 'active' : ''}"
-                  ?disabled=${counts.low === 0}
-                  @click=${() => this._switchTab('low')}>
-            Low Risk (${counts.low})
-          </button>
-          <button class="tab-button unknown ${this.activeTab === 'unknown' ? 'active' : ''}"
-                  ?disabled=${counts.unknown === 0}
-                  @click=${() => this._switchTab('unknown')}>
-            Unknown Risk (${counts.unknown})
-          </button>
-          <button class="tab-button not-found ${this.activeTab === 'notFound' ? 'active' : ''}"
-                  ?disabled=${counts.notFound === 0}
-                  @click=${() => this._switchTab('notFound')}>
-            Not Found (${counts.notFound})
-          </button>
-        </div>
+        <filter-tabs
+          .tabs=${[
+            { id: 'high', label: 'High Risk' },
+            { id: 'moderate', label: 'Moderate Risk' },
+            { id: 'low', label: 'Low Risk' },
+            { id: 'unknown', label: 'Unknown Risk' },
+            { id: 'notFound', label: 'Not Found' }
+          ]}
+          .activeTab=${this.activeTab}
+          .counts=${counts}
+          @tab-change=${this._handleTabChange}
+        ></filter-tabs>
 
         ${processedResults.isLimited ? html`
           <div class="limit-warning">
@@ -708,6 +697,8 @@ export class ResultsDisplay extends LitElement {
               .items=${categories.high}
               category="high"
               .darkMode=${this.darkMode}
+              .savedDatabase=${this.savedDatabase}
+              .searchTrait=${query}
             ></lazy-results>
           </div>
 
@@ -716,6 +707,8 @@ export class ResultsDisplay extends LitElement {
               .items=${categories.moderate}
               category="moderate"
               .darkMode=${this.darkMode}
+              .savedDatabase=${this.savedDatabase}
+              .searchTrait=${query}
             ></lazy-results>
           </div>
 
@@ -724,6 +717,8 @@ export class ResultsDisplay extends LitElement {
               .items=${categories.low}
               category="low"
               .darkMode=${this.darkMode}
+              .savedDatabase=${this.savedDatabase}
+              .searchTrait=${query}
             ></lazy-results>
           </div>
 
@@ -732,6 +727,8 @@ export class ResultsDisplay extends LitElement {
               .items=${categories.unknown}
               category="unknown"
               .darkMode=${this.darkMode}
+              .savedDatabase=${this.savedDatabase}
+              .searchTrait=${query}
             ></lazy-results>
           </div>
 
@@ -740,8 +737,127 @@ export class ResultsDisplay extends LitElement {
               .items=${categories.notFound}
               category="notFound"
               .darkMode=${this.darkMode}
+              .savedDatabase=${this.savedDatabase}
+              .searchTrait=${query}
             ></lazy-results>
           </div>
+        </div>
+      </div>
+    `;
+  }
+
+  _getSavedCounts() {
+    const counts = { high: 0, moderate: 0, low: 0, unknown: 0, notFound: 0 };
+    this.savedItems.forEach(item => {
+      const category = item.traitInfo.riskLevel.toLowerCase().replace(' risk', '').replace(' ', '');
+      if (counts[category] !== undefined) counts[category]++;
+    });
+    counts.all = Object.values(counts).reduce((a, b) => a + b, 0);
+    return counts;
+  }
+
+  _renderSavedChart(counts) {
+    const total = counts.all;
+    if (total === 0) return '';
+
+    const highPerc = (counts.high / total * 100).toFixed(1);
+    const modPerc = (counts.moderate / total * 100).toFixed(1);
+    const lowPerc = (counts.low / total * 100).toFixed(1);
+    const unknownPerc = (counts.unknown / total * 100).toFixed(1);
+    const notFoundPerc = (counts.notFound / total * 100).toFixed(1);
+
+    return html`
+      <div class="chart-container">
+        ${counts.high > 0 ? html`
+          <div class="chart-segment" style="width: ${highPerc}%; background-color: #ef4444;" title="High Risk: ${counts.high}">
+            <span class="segment-label">${Math.round(highPerc)}%</span>
+          </div>
+        ` : ''}
+        ${counts.moderate > 0 ? html`
+          <div class="chart-segment" style="width: ${modPerc}%; background-color: #eab308;" title="Moderate Risk: ${counts.moderate}">
+            <span class="segment-label">${Math.round(modPerc)}%</span>
+          </div>
+        ` : ''}
+        ${counts.low > 0 ? html`
+          <div class="chart-segment" style="width: ${lowPerc}%; background-color: #22c55e;" title="Low Risk: ${counts.low}">
+            <span class="segment-label">${Math.round(lowPerc)}%</span>
+          </div>
+        ` : ''}
+        ${counts.unknown > 0 ? html`
+          <div class="chart-segment" style="width: ${unknownPerc}%; background-color: #6b7280;" title="Unknown Risk: ${counts.unknown}">
+            <span class="segment-label">${Math.round(unknownPerc)}%</span>
+          </div>
+        ` : ''}
+        ${counts.notFound > 0 ? html`
+          <div class="chart-segment" style="width: ${notFoundPerc}%; background-color: #d1d5db; color: #374151;" title="Not Found: ${counts.notFound}">
+            <span class="segment-label">${Math.round(notFoundPerc)}%</span>
+          </div>
+        ` : ''}
+      </div>
+      <div class="chart-labels">
+        <span>Your Saved Items</span>
+        <span>Risk Distribution</span>
+      </div>
+    `;
+  }
+
+  _renderSavedItems() {
+    if (!this.savedItems.length) {
+      return html`
+        <div class="results-container">
+          <div class="empty-state">
+            No saved items yet. Save SNPs from search results to review them here.
+          </div>
+        </div>
+      `;
+    }
+
+    const activeTab = this.savedActiveTab;
+    const filteredItems = activeTab === 'all' ? this.savedItems : 
+      this.savedItems.filter(item => {
+        const category = item.traitInfo.riskLevel.toLowerCase().replace(' risk', '').replace(' ', '');
+        return category === activeTab;
+      });
+
+    return html`
+      <div class="results-container">
+        <filter-tabs
+          .tabs=${[
+            { id: 'all', label: 'All' },
+            { id: 'high', label: 'High Risk' },
+            { id: 'moderate', label: 'Moderate Risk' },
+            { id: 'low', label: 'Low Risk' },
+            { id: 'unknown', label: 'Unknown Risk' },
+            { id: 'notFound', label: 'Not Found' }
+          ]}
+          .activeTab=${this.savedActiveTab}
+          .counts=${this._getSavedCounts()}
+          @tab-change=${this._handleSavedTabChange}
+        ></filter-tabs>
+        <div class="tab-content">
+          <lazy-results
+            .items=${filteredItems.map(item => {
+              const riskCategory = item.traitInfo.riskLevel.toLowerCase().replace(' risk', '').replace(' ', '');
+              return {
+                rsid: item.rsid,
+                snp: item.snpData,
+                traits: item.traitInfo.traits,
+                riskAlleles: item.traitInfo.riskAlleles,
+                riskLevel: item.traitInfo.riskLevel,
+                studyUrls: item.traitInfo.studyUrls,
+                genes: item.traitInfo.genes,
+                effects: item.traitInfo.effects,
+                searchTrait: item.searchTrait,
+                notes: item.notes,
+                category: riskCategory
+              };
+            })}
+            category="saved"
+            .darkMode=${this.darkMode}
+            .savedDatabase=${this.savedDatabase}
+            .searchTrait=""
+            @item-deleted=${this._handleItemDeleted}
+          ></lazy-results>
         </div>
       </div>
     `;
