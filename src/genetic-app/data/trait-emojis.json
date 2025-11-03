@@ -1,11 +1,11 @@
 {
   "cardiovascular": {
     "emoji": "❤️",
-    "keywords": ["heart", "cardiac", "cardiovascular", "coronary", "artery", "blood pressure", "hypertension", "stroke", "atrial fibrillation", "myocardial", "angina", "lesion"]
+    "keywords": ["heart", "cardiac", "cardiovascular", "coronary", "artery", "blood pressure", "hypertension", "stroke", "atrial fibrillation", "myocardial", "angina", "lesion", "pericarditis", "endocarditis", "cardiomyopathy", "tachycardia", "bradycardia"]
   },
   "neurological": {
     "emoji": "🧠",
-    "keywords": ["brain", "neuro", "alzheimer", "parkinson", "dementia", "cognitive", "memory", "seizure", "epilepsy", "migraine", "headache", "depression", "anxiety", "bipolar", "schizophrenia"]
+    "keywords": ["brain", "neuro", "alzheimer", "parkinson", "dementia", "cognitive", "memory", "seizure", "epilepsy", "migraine", "headache", "depression", "anxiety", "bipolar", "schizophrenia", "meningitis", "encephalitis", "neuropathy", "sclerosis"]
   },
   "metabolic": {
     "emoji": "🩸",
@@ -21,7 +21,7 @@
   },
   "respiratory": {
     "emoji": "🫁",
-    "keywords": ["lung", "respiratory", "asthma", "copd", "breathing", "pneumonia", "tuberculosis", "pulmonary", "oxygen"]
+    "keywords": ["lung", "respiratory", "asthma", "copd", "breathing", "pneumonia", "tuberculosis", "pulmonary", "oxygen", "bronchitis", "bronchial", "emphysema", "pleurisy"]
   },
   "cancer": {
     "emoji": "🎗️",
@@ -29,15 +29,15 @@
   },
   "bone": {
     "emoji": "🦴",
-    "keywords": ["bone", "osteo", "fracture", "arthritis", "joint", "cartilage", "spine", "hip", "knee", "calcium"]
+    "keywords": ["bone", "osteo", "fracture", "arthritis", "joint", "cartilage", "spine", "hip", "knee", "calcium", "osteoporosis", "osteomyelitis", "bursitis", "tendinitis", "synovitis"]
   },
   "vision": {
     "emoji": "👁️",
-    "keywords": ["eye", "vision", "sight", "retina", "glaucoma", "cataract", "macular", "blind", "visual", "optic"]
+    "keywords": ["eye", "vision", "sight", "retina", "glaucoma", "cataract", "macular", "blind", "visual", "optic", "conjunctivitis", "keratitis", "uveitis", "stye", "chalazion"]
   },
   "skin": {
     "emoji": "🧴",
-    "keywords": ["skin", "dermat", "eczema", "psoriasis", "melanoma", "pigment", "hair", "nail", "rash", "acne"]
+    "keywords": ["skin", "dermat", "eczema", "psoriasis", "melanoma", "pigment", "hair", "nail", "rash", "acne", "dermatitis", "cellulitis", "impetigo", "vitiligo", "alopecia"]
   },
   "reproductive": {
     "emoji": "👶",
@@ -61,11 +61,11 @@
   },
   "kidney": {
     "emoji": "🫘",
-    "keywords": ["kidney", "renal", "nephro", "dialysis", "creatinine", "urea", "proteinuria", "hypertension"]
+    "keywords": ["kidney", "renal", "nephro", "dialysis", "creatinine", "urea", "proteinuria", "hypertension", "nephritis", "pyelonephritis", "glomerulonephritis", "kidney stones"]
   },
   "liver": {
     "emoji": "🟤",
-    "keywords": ["liver", "hepatic", "cirrhosis", "hepatitis", "bile", "jaundice", "enzyme", "alcohol"]
+    "keywords": ["liver", "hepatic", "cirrhosis", "hepatitis", "bile", "jaundice", "enzyme", "alcohol", "fatty liver", "fibrosis", "cholangitis", "gallbladder"]
   },
   "sleep": {
     "emoji": "😴",
@@ -97,7 +97,7 @@
   },
   "hearing": {
     "emoji": "👂",
-    "keywords": ["sound", "hearing", "auditory", "acoustic", "heschl", "impairment"]
+    "keywords": ["sound", "hearing", "auditory", "acoustic", "heschl", "impairment", "otitis", "tinnitus", "deafness", "earache", "vertigo"]
   },
   "spine": {
     "emoji": "🦴",
@@ -225,7 +225,7 @@
   },
   "abdomen": {
     "emoji": "🫄",
-    "keywords": ["abdomen", "abdominal", "belly", "stomach", "gastric", "intestinal", "bowel"]
+    "keywords": ["abdomen", "abdominal", "belly", "stomach", "gastric", "intestinal", "bowel", "gastritis", "colitis", "enteritis", "appendicitis", "peritonitis", "diverticulitis"]
   },
   "back": {
     "emoji": "🔙",
@@ -274,5 +274,49 @@
   "spider": {
     "emoji": "🕷️",
     "keywords": ["spider", "arachnid", "bite", "widow", "recluse"]
+  },
+  "exercise": {
+    "emoji": "🏃",
+    "keywords": ["exercise", "physical activity", "fitness", "running", "jogging", "training", "workout", "energy expenditure", "metabolic equivalent"]
+  },
+  "celiac": {
+    "emoji": "🍞",
+    "keywords": ["celiac", "gluten", "wheat", "bread", "grain", "coeliac"]
+  },
+  "drug_response": {
+    "emoji": "💊",
+    "keywords": ["response to", "drug response", "medication", "pharmacogenomics", "warfarin", "statin", "aspirin", "metformin"]
+  },
+  "alcohol": {
+    "emoji": "🍺",
+    "keywords": ["alcohol", "drinking", "alcoholism", "ethanol", "beer", "wine", "liquor", "consumption"]
+  },
+  "smoking_cessation": {
+    "emoji": "🚭",
+    "keywords": ["smoking cessation", "quit smoking", "nicotine replacement", "tobacco cessation"]
+  },
+  "coffee": {
+    "emoji": "☕",
+    "keywords": ["coffee", "caffeine", "espresso", "java", "brew"]
+  },
+  "tea": {
+    "emoji": "🍵",
+    "keywords": ["tea", "green tea", "black tea", "herbal tea", "matcha"]
+  },
+  "vitamin": {
+    "emoji": "🧪",
+    "keywords": ["vitamin", "supplement", "nutrient", "deficiency", "b12", "folate", "vitamin d"]
+  },
+  "temperature": {
+    "emoji": "🌡️",
+    "keywords": ["temperature", "fever", "hypothermia", "thermal", "heat", "cold"]
+  },
+  "stress": {
+    "emoji": "😰",
+    "keywords": ["stress", "cortisol", "anxiety", "tension", "pressure", "burnout"]
+  },
+  "longevity": {
+    "emoji": "🕰️",
+    "keywords": ["longevity", "lifespan", "centenarian", "survival", "mortality"]
   }
 }
