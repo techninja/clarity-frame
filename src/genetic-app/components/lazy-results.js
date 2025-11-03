@@ -278,6 +278,35 @@ export class LazyResults extends LitElement {
       color: white;
     }
 
+    .info-links {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .external-link {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      border: 1px solid var(--border-light);
+      border-radius: 0.375rem;
+      text-decoration: none;
+      font-size: 0.75rem;
+      transition: background-color 0.2s;
+    }
+
+    .external-link:hover {
+      background-color: var(--bg-primary);
+      text-decoration: none;
+    }
+
+    .link-icon {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+
     .position-label {
       font-size: 0.625rem;
       color: #9ca3af;
@@ -596,7 +625,17 @@ export class LazyResults extends LitElement {
               ${this._renderStudyTitle(item)}
 
               <span class="detail-label">More Info:</span>
-              <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">dbSNP</a>
+              <div class="info-links">
+                <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">
+                  <img src="https://www.ncbi.nlm.nih.gov/favicon.ico" class="link-icon" alt="">dbSNP
+                </a>
+                <a href="https://www.infino.me/snp/${item.rsid}/" target="_blank" class="external-link">
+                  <img src="https://www.infino.me/static/favicon.ico" class="link-icon" alt="">Infino
+                </a>
+                <a href="https://www.snpedia.com/index.php/${item.rsid}" target="_blank" class="external-link">
+                  <img src="https://files.snpedia.com/data/SNPedia_favicon_48x48_2011.png" class="link-icon" alt="">SNPedia
+                </a>
+              </div>
             </div>
           ` : html`
             <div class="snp-details">
@@ -608,7 +647,17 @@ export class LazyResults extends LitElement {
               ${this._renderStudyTitle(item)}
 
               <span class="detail-label">More Info:</span>
-              <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">dbSNP</a>
+              <div class="info-links">
+                <a href="https://www.ncbi.nlm.nih.gov/snp/${item.rsid}" target="_blank" class="external-link">
+                  <img src="https://www.ncbi.nlm.nih.gov/favicon.ico" class="link-icon" alt="">dbSNP
+                </a>
+                <a href="https://www.infino.me/snp/${item.rsid}/" target="_blank" class="external-link">
+                  <img src="https://www.infino.me/static/favicon.ico" class="link-icon" alt="">Infino
+                </a>
+                <a href="https://www.snpedia.com/index.php/${item.rsid}" target="_blank" class="external-link">
+                  <img src="https://files.snpedia.com/data/SNPedia_favicon_48x48_2011.png" class="link-icon" alt="">SNPedia
+                </a>
+              </div>
             </div>
           `}
         </details>
