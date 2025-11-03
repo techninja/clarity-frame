@@ -267,7 +267,7 @@ export class ResultsDisplay extends LitElement {
     }
 
     .external-link {
-      color: #3b82f6;
+      color: var(--accent-blue);
       text-decoration: none;
     }
 
@@ -277,7 +277,7 @@ export class ResultsDisplay extends LitElement {
 
     .empty-state {
       font-size: 0.875rem;
-      color: var(--text-secondary, #6b7280);
+      color: var(--text-secondary);
       padding: 0.75rem;
       text-align: center;
     }

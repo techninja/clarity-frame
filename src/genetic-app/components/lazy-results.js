@@ -289,8 +289,9 @@ export class LazyResults extends LitElement {
       align-items: center;
       gap: 0.25rem;
       padding: 0.25rem 0.5rem;
-      border: 1px solid var(--border-light);
+      border: 1px solid var(--border-color);
       border-radius: 0.375rem;
+      background-color: var(--bg-secondary);
       text-decoration: none;
       font-size: 0.75rem;
       transition: background-color 0.2s;

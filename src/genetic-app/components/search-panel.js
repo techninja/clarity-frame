@@ -92,8 +92,8 @@ export class SearchPanel extends LitElement {
     }
 
     .spinner {
-      border: 2px solid rgba(0, 0, 0, 0.1);
-      border-left-color: #3b82f6;
+      border: 2px solid var(--border-light);
+      border-left-color: var(--accent-blue);
       border-radius: 50%;
       width: 1rem;
       height: 1rem;

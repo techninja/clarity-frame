@@ -25,7 +25,7 @@ export class GeneticApp extends LitElement {
       --text-primary: #111827;
       --text-secondary: #6b7280;
       --text-muted: #9ca3af;
-      --border-color: rgba(255, 255, 255, 0.2);
+      --border-color: rgba(210, 180, 210, 0.8);
       --input-bg: #ffffff;
       --input-border: #d1d5db;
       --border-light: #e5e7eb;
@@ -266,8 +266,8 @@ export class GeneticApp extends LitElement {
       min-width: 80px;
       height: 120px;
       border-radius: 0.5rem;
-      background: #f8fafc;
-      border: 2px solid #e2e8f0;
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-color);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -289,8 +289,9 @@ export class GeneticApp extends LitElement {
     .spinner {
       width: 1rem;
       height: 1rem;
-      border: 2px solid rgba(0, 0, 0, 0.1);
-      border-left-color: #3b82f6;
+      border: 2px solid red;
+      border-left-color: blue;
+      
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin-right: 0.5rem;
@@ -414,7 +415,7 @@ export class GeneticApp extends LitElement {
     .spinner {
       width: 1rem;
       height: 1rem;
-      border: 2px solid rgba(255, 255, 255, 0.3);
+      border: 2px solid var(--border-color);
       border-left-color: white;
       border-radius: 50%;
       animation: spin 1s linear infinite;
