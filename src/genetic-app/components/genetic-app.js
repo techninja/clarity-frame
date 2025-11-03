@@ -388,16 +388,16 @@ export class GeneticApp extends LitElement {
   }
 
   async firstUpdated() {
-    const canvas = this.shadowRoot.querySelector('#dna-canvas');
-    if (canvas) {
-      this.dnaBackground = new DNABackground(canvas);
-      this.dnaBackground.init();
-      // console.log('DNA background initialized');
-    } else {
-      console.error('Canvas not found');
-    }
-
     await this._initDatabase();
+    
+    // Initialize DNA background after DOM is ready
+    requestAnimationFrame(() => {
+      const canvas = this.shadowRoot.querySelector('#dna-canvas');
+      if (canvas) {
+        this.dnaBackground = new DNABackground(canvas);
+        this.dnaBackground.init();
+      }
+    });
   }
 
   async _initDatabase() {
