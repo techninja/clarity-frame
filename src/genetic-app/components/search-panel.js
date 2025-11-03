@@ -33,7 +33,7 @@ export class SearchPanel extends LitElement {
       font-size: 1.25rem;
       font-weight: 600;
       margin: 0;
-      color: #111827;
+      color: var(--text-primary);
     }
 
     @media (min-width: 768px) {
@@ -44,7 +44,7 @@ export class SearchPanel extends LitElement {
 
     .description {
       font-size: 0.875rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       margin-bottom: 1rem;
     }
 
@@ -55,7 +55,7 @@ export class SearchPanel extends LitElement {
     .traits-label {
       font-size: 0.875rem;
       font-weight: 500;
-      color: #374151;
+      color: var(--text-primary);
       margin-bottom: 0.5rem;
       display: block;
     }
@@ -82,9 +82,9 @@ export class SearchPanel extends LitElement {
       border-radius: 9999px;
       font-weight: 500;
       font-size: 0.875rem;
-      background-color: #f3f4f6;
-      color: #6b7280;
-      border: 1px solid #d1d5db;
+      background-color: var(--bg-primary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
       cursor: not-allowed;
       opacity: 0.7;
       white-space: nowrap;
@@ -119,10 +119,16 @@ export class SearchPanel extends LitElement {
     .search-input {
       flex-grow: 1;
       padding: 0.5rem 1rem;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--input-border);
+      background: var(--input-bg);
+      color: var(--text-primary);
       border-radius: 0.5rem;
       font-size: 1rem;
       transition: all 0.2s;
+    }
+
+    .search-input::placeholder {
+      color: var(--text-muted);
     }
 
     .search-input:focus {
@@ -169,7 +175,7 @@ export class SearchPanel extends LitElement {
 
     .loading-text {
       font-size: 0.75rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       font-style: italic;
     }
 

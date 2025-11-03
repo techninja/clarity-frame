@@ -12,9 +12,60 @@ export class GeneticApp extends LitElement {
     :host {
       display: block;
       min-height: 100vh;
-      background-color: #f3f4f6;
+      background-color: var(--bg-primary);
       font-family: 'Inter', sans-serif;
       position: relative;
+      transition: background-color 0.3s ease;
+      
+      /* Light theme (default) */
+      --bg-primary: #f3f4f6;
+      --bg-secondary: rgba(255, 255, 255, 0.95);
+      --bg-card: rgba(255, 255, 255, 0.9);
+      --bg-window: rgba(255, 255, 255, 0.6);
+      --text-primary: #111827;
+      --text-secondary: #6b7280;
+      --text-muted: #9ca3af;
+      --border-color: rgba(255, 255, 255, 0.2);
+      --input-bg: #ffffff;
+      --input-border: #d1d5db;
+      --border-light: #e5e7eb;
+      --accent-blue: #3b82f6;
+      --risk-high: #dc2626;
+      --risk-moderate: #ea580c;
+      --risk-low: #16a34a;
+      --risk-unknown: #6b7280;
+      --risk-high-bg: color-mix(in srgb, #dc2626 15%, white);
+      --risk-moderate-bg: color-mix(in srgb, #ea580c 15%, white);
+      --risk-low-bg: color-mix(in srgb, #16a34a 15%, white);
+      --chr-gradient-start: #3b82f6;
+      --chr-gradient-mid: #8b5cf6;
+      --chr-gradient-end: #ec4899;
+    }
+    
+    :host([dark]) {
+      /* Dark theme */
+      --bg-primary: #111827;
+      --bg-secondary: rgba(31, 41, 55, 0.95);
+      --bg-card: rgba(31, 41, 55, 0.9);
+      --bg-window: rgba(31, 41, 55, 0.6);
+      --text-primary: #f9fafb;
+      --text-secondary: #d1d5db;
+      --text-muted: #6b7280;
+      --border-color: rgba(75, 85, 99, 0.8);
+      --input-bg: #374151;
+      --input-border: #4b5563;
+      --border-light: #4b5563;
+      --accent-blue: #60a5fa;
+      --risk-high: #f87171;
+      --risk-moderate: #fb923c;
+      --risk-low: #4ade80;
+      --risk-unknown: #9ca3af;
+      --risk-high-bg: color-mix(in srgb, #f87171 25%, black);
+      --risk-moderate-bg: color-mix(in srgb, #fb923c 25%, black);
+      --risk-low-bg: color-mix(in srgb, #4ade80 25%, black);
+      --chr-gradient-start: #60a5fa;
+      --chr-gradient-mid: #a78bfa;
+      --chr-gradient-end: #f472b6;
     }
 
     #dna-canvas {
@@ -39,11 +90,11 @@ export class GeneticApp extends LitElement {
 
     .main-tabs {
       display: flex;
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--bg-secondary);
       border-radius: 0.75rem 0.75rem 0 0;
       backdrop-filter: blur(4px);
       box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border-color);
       border-bottom: none;
       margin-top: 1rem;
     }
@@ -56,25 +107,33 @@ export class GeneticApp extends LitElement {
       cursor: pointer;
       font-weight: 600;
       font-size: 1rem;
-      color: #6b7280;
+      color: var(--text-muted);
       transition: all 0.2s ease;
     }
 
     .tab-button.active {
-      background: #3b82f6;
+      background: var(--accent-blue);
       color: white;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 0.75rem 0.75rem 0 0;
     }
 
     .tab-button:hover:not(.active) {
       background: rgba(59, 130, 246, 0.1);
-      color: #3b82f6;
+      color: var(--accent-blue);
+    }
+
+    .tab-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      color: var(--text-muted);
     }
 
     .tab-content {
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--bg-window);
       backdrop-filter: blur(4px);
       box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border-color);
       border-top: none;
       padding: 1.5rem;
       display: grid;
@@ -95,11 +154,11 @@ export class GeneticApp extends LitElement {
     }
 
     .results-wrapper {
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--bg-window);
       border-radius: 0.75rem;
       backdrop-filter: blur(4px);
       box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border-color);
       margin-top: 1rem;
       flex: 1;
       display: flex;
@@ -112,12 +171,13 @@ export class GeneticApp extends LitElement {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--bg-secondary);
       backdrop-filter: blur(4px);
       padding: 1rem;
       border-radius: 0.75rem;
       box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      border: 1px solid var(--border-color);
+      transition: all 0.3s ease;
     }
 
     .header-content {
@@ -129,6 +189,20 @@ export class GeneticApp extends LitElement {
       display: flex;
       align-items: center;
       gap: 1rem;
+    }
+    
+    .theme-toggle {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      transition: background-color 0.2s;
+    }
+    
+    .theme-toggle:hover {
+      background: rgba(0, 0, 0, 0.1);
     }
 
     .trash-button {
@@ -178,26 +252,26 @@ export class GeneticApp extends LitElement {
     .results-title {
       font-size: 1.125rem;
       font-weight: 700;
-      color: #111827;
+      color: var(--text-primary);
       margin: 0 0 0.25rem 0;
     }
 
     .results-summary {
       font-size: 0.875rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       margin: 0;
     }
 
     .trait-image {
       min-width: 80px;
-      height: 80px;
+      height: 120px;
       border-radius: 0.5rem;
       background: #f8fafc;
       border: 2px solid #e2e8f0;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 3.75rem;
+      font-size: 4.5rem;
       flex-shrink: 0;
       padding: 0 0.5rem;
     }
@@ -208,7 +282,7 @@ export class GeneticApp extends LitElement {
       justify-content: center;
       height: 3rem;
       margin: 1rem 0;
-      color: #6b7280;
+      color: var(--text-secondary);
       font-size: 0.875rem;
     }
 
@@ -228,9 +302,9 @@ export class GeneticApp extends LitElement {
 
     .disclaimer {
       font-size: 0.75rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       padding: 0.5rem;
-      background-color: #f3f4f6;
+      background-color: var(--bg-primary);
       border-radius: 0.375rem;
       margin: 0.75rem 0;
     }
@@ -283,7 +357,7 @@ export class GeneticApp extends LitElement {
       display: flex;
       justify-content: space-between;
       font-size: 0.75rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       margin-top: 0.25rem;
       padding: 0 0.25rem;
     }
@@ -291,13 +365,15 @@ export class GeneticApp extends LitElement {
     h1 {
       font-size: 1.875rem;
       font-weight: 700;
-      color: #111827;
+      color: var(--text-primary);
       margin: 0 0 0.5rem 0;
+      transition: color 0.3s ease;
     }
 
     .subtitle {
-      color: #6b7280;
+      color: var(--text-secondary);
       margin: 0;
+      transition: color 0.3s ease;
     }
 
     .card {
@@ -365,7 +441,8 @@ export class GeneticApp extends LitElement {
     currentSearchQuery: { type: String },
     searchProgress: { type: Object },
     activeTab: { type: String },
-    currentEmoji: { type: String }
+    currentEmoji: { type: String },
+    darkMode: { type: Boolean, reflect: true, attribute: 'dark' }
   };
 
   constructor() {
@@ -382,6 +459,7 @@ export class GeneticApp extends LitElement {
     this.searchProgress = { step: '', detail: '' };
     this.activeTab = 'search';
     this.currentEmoji = '🧬';
+    this.darkMode = false;
     this.database = new GeneticDatabase();
     this.gwasApi = new GWASApi();
     this.dnaBackground = null;
@@ -396,6 +474,7 @@ export class GeneticApp extends LitElement {
       if (canvas) {
         this.dnaBackground = new DNABackground(canvas);
         this.dnaBackground.init();
+        this.dnaBackground.setDarkMode(this.darkMode);
       }
     });
   }
@@ -639,7 +718,7 @@ export class GeneticApp extends LitElement {
         <div class="results-header">
           <div class="results-text">
             <h3 class="results-title">Search Error</h3>
-            <p class="results-summary" style="color: #dc2626;">${this.searchError}</p>
+            <p class="results-summary" style="color: var(--text-error, #dc2626);">${this.searchError}</p>
           </div>
         </div>
       `;
@@ -656,7 +735,7 @@ export class GeneticApp extends LitElement {
           <h3 class="results-title">Results for "${query}"</h3>
           <p class="results-summary">
             Found <strong>${totalAssociated.toLocaleString()}</strong> known SNP(s) associated with this term.
-            <strong style="color: ${totalMatched > 0 ? '#059669' : '#6b7280'}">${totalMatched.toLocaleString()}</strong>
+            <strong style="color: ${totalMatched > 0 ? '#059669' : 'var(--text-secondary)'}">${totalMatched.toLocaleString()}</strong>
             ${totalMatched === 1 ? 'match was' : 'matches were'} found in your data.
           </p>
         </div>
@@ -793,6 +872,11 @@ export class GeneticApp extends LitElement {
       detail: { error }
     }));
   }
+  
+  _toggleTheme() {
+    this.darkMode = !this.darkMode;
+    this.dnaBackground?.setDarkMode(this.darkMode);
+  }
 
   render() {
     // Show upload prompt if no data
@@ -853,6 +937,13 @@ export class GeneticApp extends LitElement {
           </div>
           <div class="header-actions">
             <button 
+              class="theme-toggle"
+              @click=${this._toggleTheme}
+              title="Toggle dark/light theme"
+            >
+              ${this.darkMode ? '☀️' : '🌙'}
+            </button>
+            <button 
               class="trash-button"
               @click=${this._handleClearDatabase}
               title="Clear all data and start over"
@@ -898,6 +989,7 @@ export class GeneticApp extends LitElement {
             .error=${this.searchError}
             .searchQuery=${this.currentSearchQuery}
             .searchProgress=${this.searchProgress}
+            .darkMode=${this.darkMode}
           ></results-display>
         </div>
       </div>

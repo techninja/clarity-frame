@@ -9,8 +9,8 @@ export class DNALoader extends LitElement {
     }
 
     .loader-container {
-      background: rgba(249, 250, 251, 0.9);
-      border: 1px solid #e5e7eb;
+      background: transparent;
+      border: none;
       border-radius: 0.75rem;
       padding: 2rem;
       backdrop-filter: blur(2px);
@@ -51,13 +51,13 @@ export class DNALoader extends LitElement {
     .loader-text {
       font-size: 1.125rem;
       font-weight: 600;
-      color: #111827;
+      color: var(--text-primary);
       margin-bottom: 0.5rem;
     }
 
     .loader-subtitle {
       font-size: 0.875rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       margin: 0;
     }
 
@@ -68,8 +68,7 @@ export class DNALoader extends LitElement {
         left: 50%;
         transform: translateX(-50%);
         z-index: 3;
-        color: #ffffff;
-        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        color: var(--text-primary);
         margin: 0;
         text-align: center;
       }
@@ -87,13 +86,13 @@ export class DNALoader extends LitElement {
     .loader-text {
       font-size: 1.125rem;
       font-weight: 600;
-      color: #111827;
+      color: var(--text-primary);
       margin-bottom: 0.5rem;
     }
 
     .loader-subtitle {
       font-size: 0.875rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       margin: 0;
     }
   `;

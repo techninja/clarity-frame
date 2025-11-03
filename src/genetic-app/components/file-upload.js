@@ -9,7 +9,7 @@ export class FileUpload extends LitElement {
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.9);
+      background: var(--bg-card);
       border-radius: 0.75rem;
       box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
       padding: 1.5rem;
@@ -20,7 +20,7 @@ export class FileUpload extends LitElement {
       font-size: 1.25rem;
       font-weight: 600;
       margin: 0 0 1rem 0;
-      color: #111827;
+      color: var(--text-primary);
     }
 
     .file-input {
@@ -49,7 +49,7 @@ export class FileUpload extends LitElement {
     .status {
       margin-top: 1rem;
       font-size: 0.875rem;
-      color: #6b7280;
+      color: var(--text-secondary);
     }
 
     .status.success {

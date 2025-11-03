@@ -8,7 +8,7 @@ export class ChromosomeIcon extends LitElement {
     }
     
     svg {
-      stroke: #6b7280;
+      stroke: var(--text-primary, #6b7280);
       stroke-width: 2.5;
       stroke-linecap: round;
       fill: none;
@@ -29,12 +29,14 @@ export class ChromosomeIcon extends LitElement {
   `;
 
   static properties = {
-    chromosome: { type: String }
+    chromosome: { type: String },
+    darkMode: { type: Boolean }
   };
 
   constructor() {
     super();
     this.chromosome = '1';
+    this.darkMode = false;
   }
 
   _getChromosomePath(chrNum) {
@@ -64,13 +66,29 @@ export class ChromosomeIcon extends LitElement {
   }
 
   firstUpdated() {
+    this._renderPath();
+  }
+
+  updated(changedProperties) {
+    if (changedProperties.has('darkMode')) {
+      this._renderPath();
+    }
+  }
+
+  _renderPath() {
     const svg = this.shadowRoot.querySelector('svg');
+    svg.innerHTML = ''; // Clear existing paths
+    
     const rc = rough.svg(svg);
     const path = this._getChromosomePath(this.chromosome);
     
+    // Get computed stroke color from CSS
+    const computedStyle = getComputedStyle(svg);
+    const strokeColor = computedStyle.stroke;
+    
     // Create single path with subtle roughness
     const roughPath = rc.path(path, {
-      stroke: '#6b7280',
+      stroke: strokeColor,
       strokeWidth: 2.5,
       roughness: 0.6,
       bowing: 0.3,

@@ -42,6 +42,12 @@ export class DNABackground {
     this.isLoading = loading;
   }
 
+  setDarkMode(isDark) {
+    if (this.renderer) {
+      this.renderer.setClearColor(isDark ? 0x1f2937 : 0xf3f4f6, 0.8);
+    }
+  }
+
   _createDNASegments() {
     const numSegments = 6;
     for (let i = 0; i < numSegments; i++) {

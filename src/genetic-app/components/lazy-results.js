@@ -30,9 +30,9 @@ export class LazyResults extends LitElement {
       transform: translateX(-50%);
       text-align: center;
       padding: 0.5rem 1rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       font-size: 0.875rem;
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--bg-secondary);
       backdrop-filter: blur(4px);
       border-radius: 0.5rem;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -42,7 +42,7 @@ export class LazyResults extends LitElement {
 
     .empty-state {
       font-size: 0.875rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       padding: 0.75rem;
       text-align: center;
     }
@@ -54,9 +54,9 @@ export class LazyResults extends LitElement {
       transform: translateX(-50%);
       text-align: center;
       padding: 0.5rem 1rem;
-      color: #9ca3af;
+      color: var(--text-muted);
       font-size: 0.75rem;
-      background: rgba(255, 255, 255, 0.95);
+      background: var(--bg-secondary);
       backdrop-filter: blur(4px);
       border-radius: 0.5rem;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -72,28 +72,28 @@ export class LazyResults extends LitElement {
     }
 
     .snp-card.high-risk {
-      background-color: #fef2f2;
-      border-color: #fecaca;
+      background-color: var(--risk-high-bg);
+      border-color: var(--risk-high);
     }
 
     .snp-card.moderate-risk {
-      background-color: #fffbeb;
-      border-color: #fed7aa;
+      background-color: var(--risk-moderate-bg);
+      border-color: var(--risk-moderate);
     }
 
     .snp-card.low-risk {
-      background-color: #f0fdf4;
-      border-color: #bbf7d0;
+      background-color: var(--risk-low-bg);
+      border-color: var(--risk-low);
     }
 
     .snp-card.unknown-risk {
-      background-color: #f9fafb;
-      border-color: #e5e7eb;
+      background-color: var(--bg-card);
+      border-color: var(--border-color);
     }
 
     .snp-card.not-found {
-      background-color: #ffffff;
-      border-color: #e5e7eb;
+      background-color: var(--bg-card);
+      border-color: var(--border-color);
     }
 
     .snp-header {
@@ -104,10 +104,10 @@ export class LazyResults extends LitElement {
       font-weight: 600;
     }
 
-    .snp-header.high-risk { color: #991b1b; }
-    .snp-header.moderate-risk { color: #92400e; }
-    .snp-header.low-risk { color: #166534; }
-    .snp-header.unknown-risk { color: #374151; }
+    .snp-header.high-risk { color: var(--risk-high); }
+    .snp-header.moderate-risk { color: var(--risk-moderate); }
+    .snp-header.low-risk { color: var(--risk-low); }
+    .snp-header.unknown-risk { color: var(--risk-unknown); }
 
     .match-badge {
       font-size: 0.75rem;
@@ -132,17 +132,17 @@ export class LazyResults extends LitElement {
       grid-template-columns: auto 1fr;
       gap: 0.5rem 1rem;
       font-size: 0.875rem;
-      color: #374151;
+      color: var(--text-primary);
     }
 
     .detail-label {
       font-weight: 600;
-      color: #6b7280;
+      color: var(--text-secondary);
     }
 
     .allele-display {
       font-family: monospace;
-      background-color: #e5e7eb;
+      background-color: var(--border-light);
       padding: 0.125rem 0.25rem;
       border-radius: 0.25rem;
     }
@@ -166,18 +166,18 @@ export class LazyResults extends LitElement {
     .chromosome-viz {
       margin: -0.75rem -0.75rem 0.75rem -0.75rem;
       padding: 0.75rem;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid var(--border-light);
     }
 
     .chr-label {
       font-size: 0.75rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       margin-bottom: 0.25rem;
     }
 
     .chr-icon {
       flex-shrink: 0;
-      stroke: #6b7280;
+      stroke: var(--text-primary);
       stroke-width: 2;
     }
 
@@ -202,21 +202,20 @@ export class LazyResults extends LitElement {
 
     .chr-bar {
       flex: 1;
-      height: 1rem;
-      background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+      background: linear-gradient(90deg, var(--chr-gradient-start), var(--chr-gradient-mid), var(--chr-gradient-end));
       border-radius: 0.5rem;
-      opacity: 0.4;
       position: relative;
+      min-height: 1rem;
     }
 
     .position-marker {
       position: absolute;
       top: 50%;
       transform: translate(-50%, -50%);
-      width: 0.5rem;
-      height: 0.5rem;
-      background: #ef4444;
-      border: 2px solid white;
+      width: 1rem;
+      height: 1rem;
+      background: var(--chr-gradient-start);
+      border: 2px solid var(--text-primary);
       border-radius: 50%;
     }
 
@@ -243,6 +242,40 @@ export class LazyResults extends LitElement {
 
     .allele.safe {
       background: #22c55e;
+    }
+
+    .allele-comparison {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .risk-alleles,
+    .user-alleles {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .vs-label {
+      font-size: 0.75rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .risk-allele {
+      background: var(--risk-high);
+      color: white;
+    }
+
+    .user-allele.match {
+      background: var(--risk-high);
+      color: white;
+    }
+
+    .user-allele.safe {
+      background: var(--risk-low);
+      color: white;
     }
 
     .position-label {
@@ -321,7 +354,8 @@ export class LazyResults extends LitElement {
     category: { type: String },
     batchSize: { type: Number },
     visibleCount: { type: Number },
-    loading: { type: Boolean }
+    loading: { type: Boolean },
+    darkMode: { type: Boolean }
   };
 
   constructor() {
@@ -332,6 +366,7 @@ export class LazyResults extends LitElement {
     this.batchSize = 20;
     this.visibleCount = 20;
     this.loading = false;
+    this.darkMode = false;
     this.expandedTitles = new Set();
     this.expandedGenes = new Set();
   }
@@ -519,7 +554,7 @@ export class LazyResults extends LitElement {
           ${isMatched ? html`
             <div class="chromosome-viz">
               <div class="chr-container">
-                <chromosome-icon chromosome="${item.snp.chromosome}" class="chr-icon-large"></chromosome-icon>
+                <chromosome-icon chromosome="${item.snp.chromosome}" .darkMode=${this.darkMode} class="chr-icon-large"></chromosome-icon>
                 <div class="chr-content">
                   <div class="chr-label">Chr ${item.snp.chromosome}</div>
                   <div class="chr-bar">
@@ -527,16 +562,26 @@ export class LazyResults extends LitElement {
                   </div>
                   <div class="position-label">${item.snp.position.toLocaleString()}</div>
                 </div>
-                <div class="alleles">
-                  <div class="allele ${item.snp.allele1 === item.riskAlleles.split(',')[0]?.trim() ? 'risk' : 'safe'}">${item.snp.allele1}</div>
-                  <div class="allele ${item.snp.allele2 === item.riskAlleles.split(',')[0]?.trim() ? 'risk' : 'safe'}">${item.snp.allele2}</div>
-                </div>
               </div>
             </div>
             
             <div class="snp-details">
               <span class="detail-label">Risk Level:</span>
               <span class="risk-level ${riskClass}">${item.riskLevel}</span>
+
+              <span class="detail-label">Risk vs Your Alleles:</span>
+              <div class="allele-comparison">
+                <div class="risk-alleles">
+                  ${item.riskAlleles.split(',').map(allele => html`
+                    <span class="allele risk-allele">${allele.trim()}</span>
+                  `)}
+                </div>
+                <span class="vs-label">vs</span>
+                <div class="user-alleles">
+                  <span class="allele user-allele ${item.snp.allele1 === item.riskAlleles.split(',')[0]?.trim() || item.riskAlleles.split(',').includes(item.snp.allele1) ? 'match' : 'safe'}">${item.snp.allele1}</span>
+                  <span class="allele user-allele ${item.snp.allele2 === item.riskAlleles.split(',')[0]?.trim() || item.riskAlleles.split(',').includes(item.snp.allele2) ? 'match' : 'safe'}">${item.snp.allele2}</span>
+                </div>
+              </div>
 
               ${item.effects?.length ? html`
                 <span class="detail-label">Effect:</span>

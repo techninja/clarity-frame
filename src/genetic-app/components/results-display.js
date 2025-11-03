@@ -33,13 +33,13 @@ export class ResultsDisplay extends LitElement {
     .results-title {
       font-size: 1.125rem;
       font-weight: 700;
-      color: #111827;
+      color: var(--text-primary);
       margin: 0 0 0.25rem 0;
     }
 
     .results-summary {
       font-size: 0.875rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       margin: 0;
     }
 
@@ -49,7 +49,7 @@ export class ResultsDisplay extends LitElement {
       border-radius: 0.25rem;
       overflow: hidden;
       margin: 1rem 0;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--border-light);
     }
 
     .chart-segment {
@@ -88,16 +88,16 @@ export class ResultsDisplay extends LitElement {
       display: flex;
       justify-content: space-between;
       font-size: 0.75rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       margin-top: 0.25rem;
       padding: 0 0.25rem;
     }
 
     .disclaimer {
       font-size: 0.75rem;
-      color: #6b7280;
+      color: var(--text-secondary);
       padding: 0.5rem;
-      background-color: #f3f4f6;
+      background-color: var(--bg-primary);
       border-radius: 0.375rem;
       margin: 0.75rem 0;
     }
@@ -108,7 +108,7 @@ export class ResultsDisplay extends LitElement {
 
     .tabs {
       display: flex;
-      border-bottom: 1px solid #e5e7eb;
+      border-bottom: 1px solid var(--border-light);
       margin: 1rem 0 0 0;
       overflow-x: auto;
       flex-shrink: 0;
@@ -119,7 +119,7 @@ export class ResultsDisplay extends LitElement {
       border-bottom: 2px solid transparent;
       cursor: pointer;
       font-weight: 500;
-      color: #6b7280;
+      color: var(--text-secondary);
       white-space: nowrap;
       background: none;
       border-left: none;
@@ -129,19 +129,22 @@ export class ResultsDisplay extends LitElement {
 
     .tab-button.active {
       border-bottom-color: currentColor;
+      color: var(--text-primary);
+      font-weight: 600;
     }
 
     .tab-button:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      color: #9ca3af;
+      color: var(--text-muted);
+      text-decoration: line-through;
     }
 
-    .tab-button.high { color: #dc2626; }
-    .tab-button.moderate { color: #ea580c; }
-    .tab-button.low { color: #16a34a; }
-    .tab-button.unknown { color: #6b7280; }
-    .tab-button.not-found { color: #6b7280; }
+    .tab-button.high { color: var(--risk-high); }
+    .tab-button.moderate { color: var(--risk-moderate); }
+    .tab-button.low { color: var(--risk-low); }
+    .tab-button.unknown { color: var(--risk-unknown); }
+    .tab-button.not-found { color: var(--risk-unknown); }
 
     .tab-content {
       flex: 1;
@@ -274,7 +277,7 @@ export class ResultsDisplay extends LitElement {
 
     .empty-state {
       font-size: 0.875rem;
-      color: #6b7280;
+      color: var(--text-secondary, #6b7280);
       padding: 0.75rem;
       text-align: center;
     }
@@ -426,7 +429,8 @@ export class ResultsDisplay extends LitElement {
     showLoader: { type: Boolean },
     debugLoading: { type: Boolean },
     searchQuery: { type: String },
-    searchProgress: { type: Object }
+    searchProgress: { type: Object },
+    darkMode: { type: Boolean }
   };
 
   constructor() {
@@ -439,6 +443,7 @@ export class ResultsDisplay extends LitElement {
     this.debugLoading = false;
     this.searchQuery = '';
     this.searchProgress = { step: '', detail: '' };
+    this.darkMode = false;
   }
 
 
@@ -702,6 +707,7 @@ export class ResultsDisplay extends LitElement {
             <lazy-results
               .items=${categories.high}
               category="high"
+              .darkMode=${this.darkMode}
             ></lazy-results>
           </div>
 
@@ -709,6 +715,7 @@ export class ResultsDisplay extends LitElement {
             <lazy-results
               .items=${categories.moderate}
               category="moderate"
+              .darkMode=${this.darkMode}
             ></lazy-results>
           </div>
 
@@ -716,6 +723,7 @@ export class ResultsDisplay extends LitElement {
             <lazy-results
               .items=${categories.low}
               category="low"
+              .darkMode=${this.darkMode}
             ></lazy-results>
           </div>
 
@@ -723,6 +731,7 @@ export class ResultsDisplay extends LitElement {
             <lazy-results
               .items=${categories.unknown}
               category="unknown"
+              .darkMode=${this.darkMode}
             ></lazy-results>
           </div>
 
@@ -730,6 +739,7 @@ export class ResultsDisplay extends LitElement {
             <lazy-results
               .items=${categories.notFound}
               category="notFound"
+              .darkMode=${this.darkMode}
             ></lazy-results>
           </div>
         </div>
