@@ -21,7 +21,7 @@ export class GeneticApp extends LitElement {
       --bg-primary: #f3f4f6;
       --bg-secondary: rgba(255, 255, 255, 0.95);
       --bg-card: rgba(255, 255, 255, 0.9);
-      --bg-window: rgba(255, 255, 255, 0.6);
+      --bg-window: rgba(255, 255, 255, 0.5);
       --text-primary: #111827;
       --text-secondary: #6b7280;
       --text-muted: #9ca3af;
@@ -47,7 +47,7 @@ export class GeneticApp extends LitElement {
       --bg-primary: #111827;
       --bg-secondary: rgba(31, 41, 55, 0.95);
       --bg-card: rgba(31, 41, 55, 0.9);
-      --bg-window: rgba(31, 41, 55, 0.6);
+      --bg-window: rgba(31, 41, 55, 0.5);
       --text-primary: #f9fafb;
       --text-secondary: #d1d5db;
       --text-muted: #6b7280;
